@@ -1,0 +1,6 @@
+<div id="list">
+  @for (item of items; track item.id) {
+    <app-item [item]="item" (itemChange)="onItemChanged($event)"/>
+  }
+</div>
+
