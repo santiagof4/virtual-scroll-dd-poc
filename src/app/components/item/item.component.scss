@@ -1,0 +1,62 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: height .2s ease-in-out, min-height .2s ease-in-out;
+  border-bottom: 1px solid #000;
+  box-sizing: border-box;
+  padding: 10px;
+
+  h6 {
+    cursor: pointer;
+    margin: 0 0 10px 0;
+  }
+
+  article {
+    flex: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &.header {
+    $size: 50px;
+
+    height: $size;
+    min-height: $size;
+    margin-top: $size;
+
+    h6 {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    article {
+      -webkit-line-clamp: 2;
+    }
+
+    &.expanded {
+      height: 100px;
+      min-height: 100px;
+    }
+  }
+
+  &.item {
+    height: 34px;
+    min-height: 34px;
+
+    article {
+      -webkit-line-clamp: 8;
+    }
+
+    &.expanded {
+      height: 200px;
+      min-height: 200px;
+    }
+  }
+}
