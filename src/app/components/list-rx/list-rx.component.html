@@ -1,0 +1,19 @@
+<div
+  class="list-wrapper"
+>
+  <rx-virtual-scroll-viewport
+    id="viewport"
+    [dynamic]="dynamicSize"
+    [appendOnly]="isDragging()"
+  >
+    <div *rxVirtualFor="let item of items; trackBy: 'id'" class="item-wrapper">
+      <app-item
+        [item]="item"
+        (itemChange)="onItemChanged($event)"
+        (dragstart)="isDragging.set(true)"
+        (dragend)="isDragging.set(false)"
+      />
+    </div>
+  </rx-virtual-scroll-viewport>
+</div>
+
