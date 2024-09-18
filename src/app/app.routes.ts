@@ -1,3 +1,19 @@
 import { Routes } from '@angular/router';
+import { ListComponent } from './components/list/list.component'
+import { ListRxComponent } from './components/list-rx/list-rx.component'
+import { ListCdkComponent } from './components/list-cdk/list-cdk.component'
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {
+    path: '',
+    component: ListComponent
+  },
+  {
+    path: 'rx',
+    component: ListRxComponent
+  },
+  {
+    path: 'cdk',
+    component: ListCdkComponent
+  }
+];
