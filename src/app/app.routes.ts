@@ -6,6 +6,11 @@ import { ListCdkComponent } from './components/list-cdk/list-cdk.component'
 export const routes: Routes = [
   {
     path: '',
+    redirectTo: 'cdk',
+    pathMatch: 'full'
+  },
+  {
+    path: 'plain',
     component: ListComponent
   },
   {
