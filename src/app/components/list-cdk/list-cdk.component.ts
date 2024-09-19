@@ -81,6 +81,7 @@ export class ListCdkComponent implements OnInit {
 
         this.itemsCopy = [...this.items]
         this.items = this.items.map(item => ({ ...item, expanded: false }))
+        this.getItemsHeights()
       },
       onEnd: (event) => {
         this.isDragging.set(false)
@@ -92,6 +93,7 @@ export class ListCdkComponent implements OnInit {
         moveItemInArray(this.items, this.draggedItemIndex, event.newIndex! + range.start)
 
         this.items = [...this.items]
+        this.getItemsHeights()
       },
       scroll: document.documentElement,
       scrollSpeed: 400,
