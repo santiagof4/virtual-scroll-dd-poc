@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal, viewChild } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, OnInit, signal, viewChild } from '@angular/core'
 import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop'
 import { CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport } from '@angular/cdk/scrolling'
 import Sortable from 'sortablejs'
 import {
@@ -14,8 +13,6 @@ import {
   standalone: true,
   imports: [
     ItemComponent,
-    CdkDropList,
-    CdkDrag,
     CdkVirtualScrollViewport,
     CdkFixedSizeVirtualScroll,
     CdkVirtualForOf,
@@ -28,9 +25,10 @@ import {
 export class ListCdkComponent implements OnInit {
   viewportElement = viewChild.required(CdkVirtualScrollViewport)
 
-  items: Item[] = []
-  itemsCopy: Item[] = []
-  itemHeights: number[] = []
+  items = signal<Item[]>([])
+  itemsCopy: Item[] | undefined
+
+  itemHeights = computed(() => this.getItemsHeights())
 
   isDragging = signal<boolean>(false)
   private draggedItemIndex: number
@@ -44,15 +42,14 @@ export class ListCdkComponent implements OnInit {
    * Mocks the data for the list
    */
   private mockData(): void {
-    this.items = mockItems(1000)
-    this.getItemsHeights()
+    this.items.set(mockItems(1000))
   }
 
   /**
    * Gets the heights of the items for the virtual scroll
    */
-  private getItemsHeights(): void {
-    this.itemHeights = this.items.map(item => {
+  private getItemsHeights(): number[] {
+    return this.items().map(item => {
       switch (item.type) {
         case 'header':
           const marginTop = 50
@@ -79,21 +76,27 @@ export class ListCdkComponent implements OnInit {
 
         this.draggedItemIndex = event.oldIndex! + range.start
 
-        this.itemsCopy = [...this.items]
-        this.items = this.items.map(item => ({ ...item, expanded: false }))
-        this.getItemsHeights()
+        if (this.items().some(item => item.expanded)) {
+          this.itemsCopy = [...this.items()]
+          this.items.update(items => items.map(item => ({...item, expanded: false})))
+        }
       },
       onEnd: (event) => {
         this.isDragging.set(false)
 
-        this.items = this.itemsCopy
+        if (this.itemsCopy) {
+          this.items.set(this.itemsCopy)
+          this.itemsCopy = undefined
+        }
 
         const range = this.viewportElement().getRenderedRange()
 
-        moveItemInArray(this.items, this.draggedItemIndex, event.newIndex! + range.start)
-
-        this.items = [...this.items]
-        this.getItemsHeights()
+        this.items.update(items => {
+          const item = items[this.draggedItemIndex]
+          items.splice(this.draggedItemIndex, 1)
+          items.splice(event.newIndex! + range.start, 0, item)
+          return items
+        })
       },
       scroll: document.documentElement,
       scrollSpeed: 400,
@@ -107,14 +110,7 @@ export class ListCdkComponent implements OnInit {
    * @param updatedItem
    */
   onItemChanged(updatedItem: Item): void {
-    this.items = this.items.map(i => (i.id === updatedItem.id ? updatedItem : i))
-    this.getItemsHeights()
-  }
-
-  drop(event: CdkDragDrop<Item[], any>) {
-    moveItemInArray(this.items, event.previousIndex , event.currentIndex);
-
-    this.getItemsHeights()
+    this.items.update(items => items.map(i => (i.id === updatedItem.id ? updatedItem : i)))
   }
 
   trackById(index: number, item: Item): string {

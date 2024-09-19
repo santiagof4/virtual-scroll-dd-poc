@@ -1,11 +1,11 @@
 <cdk-virtual-scroll-viewport
   customVirtualScrollStrategy
-  [itemHeights]="itemHeights"
+  [itemHeights]="itemHeights()"
   [appendOnly]="isDragging()"
   class="example-viewport"
 >
   <app-item
-    *cdkVirtualFor="let item of items; trackBy: trackById"
+    *cdkVirtualFor="let item of items(); trackBy: trackById"
     class="example-item"
     [item]="item"
     (itemChange)="onItemChanged($event)"
