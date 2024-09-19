@@ -122,4 +122,11 @@ export class ListCdkComponent implements OnInit {
   trackById(index: number, item: Item): string {
     return item.id
   }
+
+  onDragStart(event: DragEvent) {
+    // Use the dataTransfer API to set the drag image
+    // The original dragged element should be us
+    //event.dataTransfer!.setDragImage(new Image(), 0, 0)
+
+  }
 }
