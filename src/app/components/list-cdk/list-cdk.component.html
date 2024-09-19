@@ -1,13 +1,19 @@
-<cdk-virtual-scroll-viewport
-  customVirtualScrollStrategy
-  [itemHeights]="itemHeights()"
-  [appendOnly]="isDragging()"
-  class="example-viewport"
->
-  <app-item
-    *cdkVirtualFor="let item of items(); trackBy: trackById"
-    class="example-item"
-    [item]="item"
-    (itemChange)="onItemChanged($event)"
-  />
-</cdk-virtual-scroll-viewport>
+<section class="list-wrapper" cdkVirtualScrollingElement>
+  <h1>List using Angular CDK Virtual Scroll + SortableJS</h1>
+
+  <cdk-virtual-scroll-viewport
+    customVirtualScrollStrategy
+    [itemHeights]="itemHeights()"
+    [appendOnly]="isDragging()"
+    class="example-viewport"
+  >
+    <app-item
+      *cdkVirtualFor="let item of items(); trackBy: trackById"
+      class="example-item"
+      [item]="item"
+      (itemChange)="onItemChanged($event)"
+      (dragstart)="onDragStart($event)"
+    />
+  </cdk-virtual-scroll-viewport>
+</section>
+

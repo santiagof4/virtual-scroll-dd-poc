@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, OnInit, signal, viewChild
 import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
-import { CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport } from '@angular/cdk/scrolling'
+import {
+  CdkFixedSizeVirtualScroll,
+  CdkVirtualForOf,
+  CdkVirtualScrollableElement,
+  CdkVirtualScrollViewport
+} from '@angular/cdk/scrolling'
 import Sortable from 'sortablejs'
 import {
   CustomVirtualScrollDirective
@@ -16,7 +21,8 @@ import {
     CdkVirtualScrollViewport,
     CdkFixedSizeVirtualScroll,
     CdkVirtualForOf,
-    CustomVirtualScrollDirective
+    CustomVirtualScrollDirective,
+    CdkVirtualScrollableElement
   ],
   templateUrl: './list-cdk.component.html',
   styleUrl: './list-cdk.component.scss',
@@ -65,10 +71,14 @@ export class ListCdkComponent implements OnInit {
    */
   private initDD(): void {
     const virtualScrollWrapper = document.querySelector('.cdk-virtual-scroll-content-wrapper')!
+    const listWrapper = document.querySelector('.list-wrapper')!
 
     Sortable.create(virtualScrollWrapper as HTMLElement, {
-      group: 'shared',
       animation: 150,
+      scroll: listWrapper as HTMLElement,
+      scrollSpeed: 25,
+      scrollSensitivity: 50,
+      removeCloneOnHide: false,
       onStart: event => {
         this.isDragging.set(true)
 
@@ -97,11 +107,7 @@ export class ListCdkComponent implements OnInit {
           items.splice(event.newIndex! + range.start, 0, item)
           return items
         })
-      },
-      scroll: document.documentElement,
-      scrollSpeed: 400,
-      scrollSensitivity: 100,
-      removeCloneOnHide: false
+      }
     })
   }
 
