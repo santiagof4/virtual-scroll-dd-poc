@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, OnInit, signal, viewChild } from '@angular/core'
+import { ChangeDetectionStrategy, Component, ComponentRef, computed, OnInit, signal, viewChild } from '@angular/core'
 import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
@@ -12,6 +12,8 @@ import Sortable from 'sortablejs'
 import {
   CustomVirtualScrollDirective
 } from '../../directives/custom-virtual-scroll-strategy/custom-virtual-scroll-strategy.directive'
+import { DragDropDirective } from '../../directives/drag-drop/drag-drop.directive'
+import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
 
 @Component({
   selector: 'app-list',
@@ -22,7 +24,8 @@ import {
     CdkFixedSizeVirtualScroll,
     CdkVirtualForOf,
     CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement
+    CdkVirtualScrollableElement,
+    DragDropDirective
   ],
   templateUrl: './list-cdk.component.html',
   styleUrl: './list-cdk.component.scss',
@@ -38,10 +41,12 @@ export class ListCdkComponent implements OnInit {
 
   isDragging = signal<boolean>(false)
   private draggedItemIndex: number
+  moveEvent = signal<number>(0)
+  dragDataIndex = signal<number | undefined>(undefined)
+  itemDragPreviewComponent = ItemDragPreviewComponent
 
   ngOnInit(): void {
     this.mockData()
-    this.initDD()
   }
 
   /**
@@ -67,51 +72,6 @@ export class ListCdkComponent implements OnInit {
   }
 
   /**
-   * Initializes the drag and drop functionality
-   */
-  private initDD(): void {
-    const virtualScrollWrapper = document.querySelector('.cdk-virtual-scroll-content-wrapper')!
-    const listWrapper = document.querySelector('.list-wrapper')!
-
-    Sortable.create(virtualScrollWrapper as HTMLElement, {
-      animation: 150,
-      scroll: listWrapper as HTMLElement,
-      scrollSpeed: 25,
-      scrollSensitivity: 50,
-      removeCloneOnHide: false,
-      onStart: event => {
-        this.isDragging.set(true)
-
-        const range = this.viewportElement().getRenderedRange()
-
-        this.draggedItemIndex = event.oldIndex! + range.start
-
-        if (this.items().some(item => item.expanded)) {
-          this.itemsCopy = [...this.items()]
-          this.items.update(items => items.map(item => ({...item, expanded: false})))
-        }
-      },
-      onEnd: (event) => {
-        this.isDragging.set(false)
-
-        if (this.itemsCopy) {
-          this.items.set(this.itemsCopy)
-          this.itemsCopy = undefined
-        }
-
-        const range = this.viewportElement().getRenderedRange()
-
-        this.items.update(items => {
-          const item = items[this.draggedItemIndex]
-          items.splice(this.draggedItemIndex, 1)
-          items.splice(event.newIndex! + range.start, 0, item)
-          return items
-        })
-      }
-    })
-  }
-
-  /**
    * Updates the item in the list
    * @param updatedItem
    */
@@ -119,14 +79,69 @@ export class ListCdkComponent implements OnInit {
     this.items.update(items => items.map(i => (i.id === updatedItem.id ? updatedItem : i)))
   }
 
+  /**
+   * Tracks the item by its id
+   * @param {number} index
+   * @param {Item} item
+   * @returns {string}
+   */
   trackById(index: number, item: Item): string {
     return item.id
   }
 
-  onDragStart(event: DragEvent) {
-    // Use the dataTransfer API to set the drag image
-    // The original dragged element should be us
-    //event.dataTransfer!.setDragImage(new Image(), 0, 0)
+  /**
+   * Handles the drag start event
+   * @param {Sortable.SortableEvent} event
+   */
+  onDragStart(event: Sortable.SortableEvent): void {
+    this.isDragging.set(true)
 
+    const range = this.viewportElement().getRenderedRange()
+
+    this.draggedItemIndex = event.oldIndex! + range.start
+    this.dragDataIndex.set(this.draggedItemIndex)
+
+    if (this.items().some(item => item.expanded)) {
+      this.itemsCopy = [...this.items()]
+      this.items.update(items => items.map(item => ({...item, expanded: false})))
+    }
+  }
+
+  /**
+   * Handles the drag end event
+   * @param {Sortable.SortableEvent} event
+   */
+  onDragEnd(event: Sortable.SortableEvent): void {
+    this.isDragging.set(false)
+
+    if (this.itemsCopy) {
+      this.items.set(this.itemsCopy)
+      this.itemsCopy = undefined
+    }
+
+    const range = this.viewportElement().getRenderedRange()
+
+    this.items.update(items => {
+      const item = items[this.draggedItemIndex]
+      items.splice(this.draggedItemIndex, 1)
+      items.splice(event.newIndex! + range.start, 0, item)
+      return items
+    })
+  }
+
+  /**
+   * Handles the drag move event
+   * @param event
+   */
+  onDragMove(event: Sortable.MoveEvent) {
+    //this.moveEvent.set(event.timeStamp)
+  }
+
+  /**
+   * Sets the input of the component used as drag preview
+   * @param {ComponentRef<ItemDragPreviewComponent>} componentRef
+   */
+  onPreviewCreate(componentRef: ComponentRef<ItemDragPreviewComponent>): void {
+    componentRef.setInput('item', this.items()[this.dragDataIndex()!])
   }
 }

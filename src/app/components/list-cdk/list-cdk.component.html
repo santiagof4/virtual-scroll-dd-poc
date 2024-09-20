@@ -5,14 +5,25 @@
     customVirtualScrollStrategy
     [itemHeights]="itemHeights()"
     [appendOnly]="isDragging()"
+
     class="example-viewport"
+
+    dragDrop
+    [listElementSelector]="'.cdk-virtual-scroll-content-wrapper'"
+    [scrollElementSelector]="'.list-wrapper'"
+    [previewComponent]="itemDragPreviewComponent"
+    [dragData]="items()"
+    [dragDataIndex]="dragDataIndex()"
+    (onDragStart)="onDragStart($event)"
+    (onDragEnd)="onDragEnd($event)"
+    (onDragMove)="onDragMove($event)"
+    (onPreviewCreate)="onPreviewCreate($event)"
   >
     <app-item
       *cdkVirtualFor="let item of items(); trackBy: trackById"
       class="example-item"
       [item]="item"
       (itemChange)="onItemChanged($event)"
-      (dragstart)="onDragStart($event)"
     />
   </cdk-virtual-scroll-viewport>
 </section>
