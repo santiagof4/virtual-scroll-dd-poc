@@ -1,0 +1,67 @@
+:host {
+
+}
+
+.list-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0 20px;
+}
+
+.item-wrapper {
+  width: 100%;
+}
+
+.example-viewport {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.example-item {
+  height: 50px;
+  overflow: hidden;
+  border-bottom: 1px solid black;
+  box-sizing: border-box;
+}
+
+.sortable-chosen {
+ // user-select: none;
+}
+
+.sortable-drag {
+  height: auto !important;
+  min-height: auto !important;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  opacity: 1 !important;
+  user-select: none;
+}
+
+.sortable-placeholder {
+  opacity: 0;
+}
+
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  opacity: 0.8;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+  filter: alpha(opacity=80);
+}
+.gu-hide {
+  display: none !important;
+}
+.gu-unselectable {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+.gu-transit {
+  opacity: 0;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+  filter: alpha(opacity=20);
+}
