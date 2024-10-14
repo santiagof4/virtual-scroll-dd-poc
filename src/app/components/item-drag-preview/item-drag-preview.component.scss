@@ -1,3 +1,14 @@
 :host {
   display: flex;
+  align-items: center;
+  background-color: #dddddd;
+  padding: 5px;
+  box-sizing: border-box;
+  transition: 16ms ease-in-out;
+  height: 34px;
+
+  h6 {
+    margin: 0;
+    padding: 0;
+  }
 }

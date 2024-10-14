@@ -1,6 +1,8 @@
 import {
   ComponentRef,
+  contentChildren,
   Directive,
+  effect,
   ElementRef,
   inject,
   input,
@@ -10,12 +12,13 @@ import {
   ViewContainerRef
 } from '@angular/core'
 import Sortable, { MoveEvent, SortableEvent } from 'sortablejs'
+import { ItemComponent } from '../../components/item/item.component'
 
 @Directive({
   selector: '[dragDrop]',
   standalone: true
 })
-export class DragDropDirective<T = any, C = any> implements OnInit {
+export class DragDropDirective<T extends { id: string } = any, C = any> implements OnInit {
   private elementRef = inject(ElementRef)
   private viewContainerRef = inject(ViewContainerRef)
 
@@ -30,10 +33,27 @@ export class DragDropDirective<T = any, C = any> implements OnInit {
   onDragEnd = output<SortableEvent>()
   onPreviewCreate = output<ComponentRef<C>>()
 
+  private items = contentChildren(ItemComponent, {read: ElementRef})
+
   private previewComponentRef: ComponentRef<C>
+
+  constructor() {
+    effect(() => {
+      // this.setItemsData()
+    })
+  }
 
   ngOnInit(): void {
     this.initDragDrop()
+  }
+
+  /**
+   * Sets the data for the items
+   */
+  private setItemsData(): void {
+    this.items().forEach((item, index) => {
+      item.nativeElement.dataset.index = index.toString()
+    })
   }
 
   /**
@@ -51,6 +71,12 @@ export class DragDropDirective<T = any, C = any> implements OnInit {
       forceFallback: true,
       fallbackOnBody: true,
       ghostClass: 'sortable-ghost',
+      swap: true,
+      swapClass: 'sortable-swap',
+      setData: (dataTransfer: DataTransfer, dragEl: HTMLElement) => {
+        const data = this.dragData()![this.dragDataIndex()!]
+        dataTransfer.setData('text/plain', data.id)
+      },
       onStart: event => {
         this.onDragStart.emit(event)
         this.showDragPreview()

@@ -5,3 +5,6 @@ export interface Item {
   expanded: boolean
   type: 'header' | 'item'
 }
+
+export const ITEM_SIZE = 34
+export const HEADER_SIZE = 100
