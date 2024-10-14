@@ -26,7 +26,6 @@ import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview
 import Sortable, { SortableEvent } from 'sortable-dnd'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { Subscription } from 'rxjs'
-import autoScrollFunction from '../../sortable/AutoScroll'
 
 @Component({
   selector: 'app-list',
@@ -168,20 +167,10 @@ export class ListCdk2Component implements OnInit {
 
   private initDD(): void {
     const listElementWrapper: HTMLElement = document.querySelector('.cdk-virtual-scroll-content-wrapper')!
-    const scrollElement: HTMLElement = document.querySelector('.list-wrapper')!
 
     this.viewportIndexSubscription = this.viewportElement().scrolledIndexChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(index => {
       this.viewportIndex = index
       this.cdr.markForCheck()
-    })
-
-    const autoScroll = autoScrollFunction(scrollElement, {
-      scroll: true,
-      forceAutoScrollFallback: false,
-      scrollSensitivity: 30,
-      scrollSpeed: 10,
-      bubbleScroll: true,
-      supportPointer: true
     })
 
     Sortable.create(listElementWrapper, {
@@ -199,14 +188,12 @@ export class ListCdk2Component implements OnInit {
       sortDuringScroll: false,
       direction: 'vertical',
       onDrag: event => {
-        autoScroll.dragStarted(event.event)
         this.onDragStart(event)
       },
       onMove: event => {
         this.onDragMove(event)
       },
       onDrop: event => {
-        autoScroll.drop()
         this.onDragEnd(event)
       },
       onChange: event => {
