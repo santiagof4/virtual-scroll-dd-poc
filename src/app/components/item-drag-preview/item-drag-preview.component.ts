@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core'
+import { ChangeDetectionStrategy, Component, HostBinding, input } from '@angular/core'
 import { Item } from '../../models/item.model'
 
 @Component({
@@ -12,4 +12,9 @@ import { Item } from '../../models/item.model'
 export class ItemDragPreviewComponent {
   item = input<Item>()
   coordinates = input<{ x: number, y: number }>()
+
+  @HostBinding('class')
+  get typeClass() {
+    return this.item().type
+  }
 }

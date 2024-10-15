@@ -74,6 +74,7 @@ export class ListCdk4Component implements OnInit {
   private dropHandled: boolean
 
   private offsetCoordinates: { x: number, y: number } = {x: 0, y: 0}
+  private marginOffsetCoordinates: { x: number, y: number } = {x: 0, y: 0}
 
   ngOnInit(): void {
     this.mockData()
@@ -241,8 +242,12 @@ export class ListCdk4Component implements OnInit {
       y: event.coordinates.y - event.element.getBoundingClientRect().top
     }
 
-    this.previewComponentRef.location.nativeElement.style.left = `${event.coordinates.x - this.offsetCoordinates.x}px`
-    this.previewComponentRef.location.nativeElement.style.top = `${event.coordinates.y - this.offsetCoordinates.y}px`
+    if (event.item.type === 'header') {
+      this.marginOffsetCoordinates.y = 50
+    }
+
+    this.previewComponentRef.location.nativeElement.style.left = `${event.coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
+    this.previewComponentRef.location.nativeElement.style.top = `${event.coordinates.y - this.offsetCoordinates.y + this.marginOffsetCoordinates.y}px`
     this.previewComponentRef.location.nativeElement.style.position = 'fixed'
     this.previewComponentRef.location.nativeElement.style.pointerEvents = 'none'
     this.previewComponentRef.location.nativeElement.style.width = event.element.offsetWidth + 'px'
@@ -255,8 +260,8 @@ export class ListCdk4Component implements OnInit {
   private onDrag(event: BaseEventPayload<ElementDragType>) {
     const coordinates = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
 
-    this.previewComponentRef.location.nativeElement.style.left = `${coordinates.x - this.offsetCoordinates.x}px`
-    this.previewComponentRef.location.nativeElement.style.top = `${coordinates.y - this.offsetCoordinates.y}px`
+    this.previewComponentRef.location.nativeElement.style.left = `${coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
+    this.previewComponentRef.location.nativeElement.style.top = `${coordinates.y - this.offsetCoordinates.y + this.marginOffsetCoordinates.y}px`
   }
 
   private onDrop(event: BaseEventPayload<ElementDragType>) {
