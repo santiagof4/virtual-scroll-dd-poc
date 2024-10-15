@@ -244,6 +244,8 @@ export class ListCdk4Component implements OnInit {
 
     if (event.item.type === 'header') {
       this.marginOffsetCoordinates.y = 50
+    } else {
+      this.marginOffsetCoordinates.y = 0
     }
 
     this.previewComponentRef.location.nativeElement.style.left = `${event.coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
