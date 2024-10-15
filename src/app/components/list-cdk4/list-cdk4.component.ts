@@ -264,6 +264,11 @@ export class ListCdk4Component implements OnInit {
 
     this.previewComponentRef.location.nativeElement.style.left = `${coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
     this.previewComponentRef.location.nativeElement.style.top = `${coordinates.y - this.offsetCoordinates.y + this.marginOffsetCoordinates.y}px`
+
+    const closestEdge = extractClosestEdge(event.location.current.dropTargets[0]?.data)
+
+    this.previewComponentRef.setInput('dropItem', event.location.current.dropTargets[0]?.data['item'])
+    this.previewComponentRef.setInput('dropEdge', closestEdge)
   }
 
   private onDrop(event: BaseEventPayload<ElementDragType>) {
@@ -286,7 +291,7 @@ export class ListCdk4Component implements OnInit {
     const draggedIndex = this.items().findIndex(item => item.id === draggedItem.id)
 
     const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
-    const offset = closestEdge === 'top' ? 0 : 1
+    const offset = closestEdge === 'top' ? 0 : 0
 
     this.items.update(items => {
       items.splice(draggedIndex, 1)

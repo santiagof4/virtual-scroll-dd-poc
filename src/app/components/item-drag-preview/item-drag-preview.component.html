@@ -1,6 +1,6 @@
 <h6>Dragging: {{ item()?.title }}</h6>
 
-@if (coordinates()) {
-  <span>{{ coordinates()?.x }}, {{ coordinates()?.y }}</span>
+@if (dropItem()) {
+  <span>To be dropped before: {{ dropItem().title }} - Closest edge: {{ dropEdge() }}</span>
 }
 

@@ -11,7 +11,8 @@ import { Item } from '../../models/item.model'
 })
 export class ItemDragPreviewComponent {
   item = input<Item>()
-  coordinates = input<{ x: number, y: number }>()
+  dropItem = input<Item>()
+  dropEdge = input<string>()
 
   @HostBinding('class')
   get typeClass() {
