@@ -1,13 +1,13 @@
 import {
   AfterViewInit,
-  Component, ComponentRef,
+  ComponentRef,
   Directive,
   ElementRef,
   HostBinding,
   inject,
   input,
+  OnDestroy,
   output,
-  signal,
   Type
 } from '@angular/core'
 import { DragDropService } from '../../services/drag-drop.service'
@@ -15,7 +15,7 @@ import type { SafeStyle } from '@angular/platform-browser'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { disableNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview'
-import { attachClosestEdge, Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
+import { attachClosestEdge, Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
 import { BaseEventPayload, ElementDragType, Input } from '@atlaskit/pragmatic-drag-and-drop/types'
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled'
 
@@ -23,7 +23,7 @@ import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unha
   selector: '[appDrag]',
   standalone: true
 })
-export class DragDirective<I extends { id: string }, C = any> implements AfterViewInit {
+export class DragDirective<I extends { id: string }, C = any> implements AfterViewInit, OnDestroy {
   private elementRef = inject(ElementRef)
   private dragDropService = inject(DragDropService<I>, { host: true })
 
@@ -35,7 +35,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   dragPreviewComponent = input<Type<C>>()
   dragPreviewOffset = input<{ x: number, y: number }>({ x: 0, y: 0 })
 
-  onDragStarted = output<{ coordinates: { x: number, y: number }, item: I, element: HTMLElement }>()
+  onDragStarted = output<BaseEventPayload<ElementDragType>>()
   onDragged = output<BaseEventPayload<ElementDragType>>()
   onDragPreviewCreated = output<ComponentRef<C>>()
 
@@ -44,8 +44,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   onDropTargetDragLeft = output<BaseEventPayload<ElementDragType>>()
   onDropped = output<BaseEventPayload<ElementDragType>>()
 
-  private isDraggingOver = signal(false)
-
+  private destroyed: boolean
 
   /**
    * Applies styles for the dragging item and the item being dragged over
@@ -86,6 +85,10 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
 
   ngAfterViewInit(): void {
     this.initDragAndDrop()
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true
   }
 
   /**
@@ -132,13 +135,11 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   private onGenerateDragPreview(event: BaseEventPayload<ElementDragType> & {
     nativeSetDragImage: (image: Element, x: number, y: number) => void
   }): void {
-    if (this.dragDisableNativePreview()) {
+    if (this.dragPreviewComponent()) {
       disableNativeDragPreview({nativeSetDragImage: event.nativeSetDragImage})
 
-      if (this.dragPreviewComponent()) {
-        const coordinates = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
-        this.showDragPreview({coordinates, item: event.source.data['item'] as I, element: event.source.element})
-      }
+      const coordinates = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
+      this.showDragPreview({coordinates, element: event.source.element})
     }
   }
 
@@ -150,9 +151,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     this.dragDropService.isDragging.set(true)
     preventUnhandled.start()
 
-    const coordinates = {x: event.location.initial.input.clientX, y: event.location.initial.input.clientY}
-
-    this.onDragStarted.emit({coordinates, item: this.dragItem(), element: this.elementRef.nativeElement})
+    this.onDragStarted.emit(event)
   }
 
   /**
@@ -169,7 +168,9 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     this.dragDropService.previewComponentRef.location.nativeElement.style.left = `${coordinates.x - this.dragDropService.previewOffset.x + this.dragPreviewOffset().x}px`
     this.dragDropService.previewComponentRef.location.nativeElement.style.top = `${coordinates.y - this.dragDropService.previewOffset.y + this.dragPreviewOffset().y}px`
 
-    this.onDragged.emit(event)
+    if (!this.destroyed) {
+      this.onDragged.emit(event)
+    }
   }
 
 
@@ -207,7 +208,6 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDropTargetDragEnter(event: BaseEventPayload<ElementDragType>): void {
-    this.isDraggingOver.set(true)
     this.dragDropService.draggingOverItem.set(this.dragItem())
 
     this.onDropTargetDragEntered.emit(event)
@@ -218,9 +218,9 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDropTargetDragLeave(event: BaseEventPayload<ElementDragType>): void {
-    this.isDraggingOver.set(false)
-
-    this.onDropTargetDragLeft.emit(event)
+    if (!this.destroyed) {
+      this.onDropTargetDragLeft.emit(event)
+    }
   }
 
   /**
@@ -228,18 +228,19 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDrop(event: BaseEventPayload<ElementDragType>): void {
-    this.isDraggingOver.set(false)
     this.dragDropService.isDragging.set(false)
     this.dragDropService.draggingOverItem.set(undefined)
     this.dragDropService.dragMoved.set(false)
 
-    this.onDropped.emit(event)
+    if (!this.destroyed) {
+      this.onDropped.emit(event)
+    }
   }
 
   /**
    * Shows the drag preview component
    */
-  private showDragPreview(event: { coordinates: { x: number, y: number }, item: I, element: HTMLElement }): void {
+  private showDragPreview(event: { coordinates: { x: number, y: number }, element: HTMLElement }): void {
     this.dragDropService.previewComponentRef = this.dragDropService.viewContainerRef.createComponent(this.dragPreviewComponent())
 
     this.dragDropService.previewOffset = {

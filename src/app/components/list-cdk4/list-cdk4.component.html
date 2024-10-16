@@ -7,8 +7,8 @@
     class="example-viewport"
 
     appDrop
-    [dropScrollingElementSelector]="'.list-wrapper'"
     [dropItems]="items()"
+    [dropScrollingElementSelector]="'.list-wrapper'"
     (onItemsReordered)="onItemsReordered($event)"
     (onDropped)="onDropped()"
   >
@@ -22,7 +22,6 @@
       [dragItem]="item"
       [dragAllowedEdges]="['top', 'bottom']"
       [dragPlaceholderSize]="item.type === 'header' ? HEADER_SIZE : ITEM_SIZE"
-      [dragDisableNativePreview]="true"
       [dragPreviewComponent]="ItemDragPreviewComponent"
       [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
       (onDragStarted)="onDragStarted(item)"
