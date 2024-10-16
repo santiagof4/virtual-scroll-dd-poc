@@ -1,14 +1,13 @@
-import { Injectable, signal } from '@angular/core'
-import { Item } from '../models/item.model'
+import { ComponentRef, Injectable, signal, ViewContainerRef } from '@angular/core'
 
-@Injectable({
-  providedIn: 'root'
-})
-export class DragDropService {
-
-  items = signal<Item[]>([])
+@Injectable()
+export class DragDropService<I extends { id: string }> {
   isDragging = signal(false)
   dragMoved = signal(false)
-  draggingOverItem = signal<Item | undefined>(undefined)
-  dragData = signal<Item | undefined>(undefined)
+  draggingOverItem = signal<I | undefined>(undefined)
+  dragData = signal<I | undefined>(undefined)
+
+  viewContainerRef: ViewContainerRef
+  previewComponentRef: ComponentRef<any>
+  previewOffset: { x: number; y: number }
 }
