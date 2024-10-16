@@ -1,18 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ComponentRef,
-  computed,
-  DestroyRef,
-  inject,
-  OnInit,
-  signal,
-  Type,
-  viewChild,
-  ViewContainerRef
-} from '@angular/core'
-import { Item } from '../../models/item.model'
+import { ChangeDetectionStrategy, Component, ComponentRef, computed, OnInit, signal, Type } from '@angular/core'
+import { HEADER_SIZE, Item, ITEM_SIZE } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
 import {
@@ -24,15 +11,10 @@ import {
 import {
   CustomVirtualScrollDirective
 } from '../../directives/custom-virtual-scroll-strategy/custom-virtual-scroll-strategy.directive'
+import { DragDirective } from '../../directives/drag/drag.directive'
+import { DropDirective } from '../../directives/drop/drop.directive'
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
-import { Subscription } from 'rxjs'
-
-import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { BaseEventPayload, ElementDragType } from '@atlaskit/pragmatic-drag-and-drop/types'
-import { DragDropService } from '../../services/drag-drop.service'
 import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
 
 
@@ -45,40 +27,28 @@ import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/clo
     CdkFixedSizeVirtualScroll,
     CdkVirtualForOf,
     CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement
+    CdkVirtualScrollableElement,
+    DragDirective,
+    DropDirective
   ],
   templateUrl: './list-cdk4.component.html',
   styleUrl: './list-cdk4.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListCdk4Component implements OnInit {
-  private previewComponentRef: ComponentRef<ItemDragPreviewComponent>
-  private viewContainerRef = inject(ViewContainerRef)
-  private dragDropService = inject(DragDropService)
-
-  private destroyRef = inject(DestroyRef)
-  private viewportElement = viewChild.required(CdkVirtualScrollViewport)
-  private cdr = inject(ChangeDetectorRef)
-
   items = signal<Item[]>([])
   itemsCopy: Item[] | undefined
 
   itemHeights = computed(() => this.getItemsHeights())
-  moveEvent = signal<number>(0)
-  private dragDataIndex: number
-  private hoverDataIndex: number
-  draggedItem: Item | undefined
-  itemDragPreviewComponent: Type<ItemDragPreviewComponent> = ItemDragPreviewComponent
-  private viewportIndexSubscription: Subscription
-  private viewportIndex: number
-  private dropHandled: boolean
+  draggedItem = signal<Item | undefined>(undefined)
 
-  private offsetCoordinates: { x: number, y: number } = {x: 0, y: 0}
-  private marginOffsetCoordinates: { x: number, y: number } = {x: 0, y: 0}
+  protected readonly ITEM_SIZE = ITEM_SIZE
+  protected readonly HEADER_SIZE = HEADER_SIZE
+  protected readonly ItemDragPreviewComponent: Type<ItemDragPreviewComponent> = ItemDragPreviewComponent
+  private dragPreviewComponentRef: ComponentRef<ItemDragPreviewComponent>
 
   ngOnInit(): void {
     this.mockData()
-    this.initDD()
   }
 
   /**
@@ -100,117 +70,11 @@ export class ListCdk4Component implements OnInit {
   }
 
   /**
-   * Handles the drag start event
-   * @param event
-   */
-  onDragStart(event: BaseEventPayload<ElementDragType>): void {
-
-
-    if (this.items().some(item => item.expanded)) {
-      this.itemsCopy = [...this.items()]
-      this.items.update(items => items.map(item => ({...item, expanded: false})))
-    }
-
-    const coordinates = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
-
-
-    this.showDragPreview({coordinates, item: event.source.data['item'] as Item, element: event.source.element})
-  }
-
-  /**
-   * Handles the drag move event
-   * @param {Sortable.MoveEvent} event
-   */
-  onDragMove(event: any): void {
-    //this.reorderItems(event)
-    console.log('move')
-  }
-
-  /**
-   * Handles the change event
-   * @param {Sortable.SortableEvent} event
-   */
-  onChange(event: any): void {
-    this.hoverDataIndex = Number(event.target.dataset['index'])
-    //this.reorderItems(event, true)
-  }
-
-  /**
-   * Handles the drag end event
-   * @param {HTMLElement} nextElement
-   */
-  onDragEnd(nextElement?: HTMLElement): void {
-    if (this.itemsCopy) {
-      this.items.set(this.itemsCopy)
-      this.itemsCopy = undefined
-    }
-
-    this.hoverDataIndex = nextElement ? Number(nextElement.dataset['index']) : this.items().length - 1
-    this.reorderItems()
-  }
-
-  /**
-   * Reorders the items in the list
-   */
-  reorderItems(): void {
-    const direction = this.dragDataIndex < this.hoverDataIndex ? 1 : -1
-    /*let offset = 0
-
-    if (direction === 1) {
-      offset = event.relative === 1 ? 0 : -1
-    } else {
-      offset = event.relative === 1 ? 1 : 0
-    }*/
-
-    const newIndex = direction === 1 ? this.hoverDataIndex - 1 : this.hoverDataIndex
-
-    this.items.update(items => {
-      items.splice(this.dragDataIndex, 1)
-      items.splice(newIndex, 0, this.draggedItem!)
-      return [...items]
-    })
-
-    //this.dragDataIndex = newIndex
-  }
-
-  /**
-   * Sets the input of the component used as drag preview
-   * @param {ComponentRef<ItemDragPreviewComponent>} componentRef
-   */
-  onPreviewCreate(componentRef: ComponentRef<ItemDragPreviewComponent>): void {
-    componentRef.setInput('item', this.draggedItem)
-  }
-
-  private initDD(): void {
-    const listElementWrapper: HTMLElement = document.querySelector('.list-wrapper')!
-
-    this.viewportIndexSubscription = this.viewportElement().scrolledIndexChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(index => {
-      this.viewportIndex = index
-      this.cdr.markForCheck()
-    })
-
-    combine(
-      monitorForElements({
-        onDragStart: event => this.onDragStart(event),
-        onDrag: event => this.onDrag(event),
-        onDrop: event => this.onDrop(event)
-      }),
-      autoScrollForElements({
-        element: listElementWrapper,
-        getConfiguration: () => ({
-          maxScrollSpeed: 'standard'
-        })
-      })
-    )
-  }
-
-  /**
    * Mocks the data for the list
    */
   private mockData(): void {
     const mockedItems = mockItems(1000).map((item, i) => ({...item, title: i + ': ' + item.title}))
     this.items.set(mockedItems)
-    this.dragDropService.items.set(mockedItems)
   }
 
   /**
@@ -218,7 +82,7 @@ export class ListCdk4Component implements OnInit {
    */
   private getItemsHeights(): number[] {
     return this.items().map(item => {
-      if (this.dragDropService.dragData()?.id === item.id) {
+      if (this.draggedItem()?.id === item.id) {
         return 0
       }
 
@@ -232,82 +96,55 @@ export class ListCdk4Component implements OnInit {
   }
 
   /**
-   * Shows the drag preview component
+   * Updates the items after they have been reordered
+   * @param {Item[]} items
    */
-  showDragPreview(event: { coordinates: { x: number, y: number }, item: Item, element: HTMLElement }): void {
-    this.previewComponentRef = this.viewContainerRef.createComponent(ItemDragPreviewComponent)
-
-    this.offsetCoordinates = {
-      x: event.coordinates.x - event.element.getBoundingClientRect().left,
-      y: event.coordinates.y - event.element.getBoundingClientRect().top
-    }
-
-    if (event.item.type === 'header') {
-      this.marginOffsetCoordinates.y = 50
-    } else {
-      this.marginOffsetCoordinates.y = 0
-    }
-
-    this.previewComponentRef.location.nativeElement.style.left = `${event.coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
-    this.previewComponentRef.location.nativeElement.style.top = `${event.coordinates.y - this.offsetCoordinates.y + this.marginOffsetCoordinates.y}px`
-    this.previewComponentRef.location.nativeElement.style.position = 'fixed'
-    this.previewComponentRef.location.nativeElement.style.pointerEvents = 'none'
-    this.previewComponentRef.location.nativeElement.style.width = event.element.offsetWidth + 'px'
-
-    this.previewComponentRef.setInput('item', event.item)
-
-    document.body.append(this.previewComponentRef.location.nativeElement)
+  onItemsReordered(items: Item[]): void {
+    // Keep the expanded state of the items
+    this.items.set(items.map(item => {
+      const existingItem = this.items().find(i => i.id === item.id)
+      return {...item, expanded: existingItem?.expanded ?? false}
+    }))
   }
 
-  private onDrag(event: BaseEventPayload<ElementDragType>) {
-    const coordinates = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
+  /**
+   * Handles the drag start event
+   * @param {Item} item
+   */
+  onDragStarted(item: Item): void {
+    this.draggedItem.set(item)
 
-    this.previewComponentRef.location.nativeElement.style.left = `${coordinates.x - this.offsetCoordinates.x + this.marginOffsetCoordinates.x}px`
-    this.previewComponentRef.location.nativeElement.style.top = `${coordinates.y - this.offsetCoordinates.y + this.marginOffsetCoordinates.y}px`
-
-    const closestEdge = extractClosestEdge(event.location.current.dropTargets[0]?.data)
-
-    this.previewComponentRef.setInput('dropItem', event.location.current.dropTargets[0]?.data['item'])
-    this.previewComponentRef.setInput('dropEdge', closestEdge)
+    // Collapse all items
+    this.itemsCopy = [...this.items()]
+    this.items.update(items => items.map(i => ({...i, expanded: false})))
   }
 
-  private onDrop(event: BaseEventPayload<ElementDragType>) {
-    this.dragDropService.dragData.set(undefined)
+  /**
+   * Handles the drop event
+   */
+  onDropped(): void {
+    this.draggedItem.set(undefined)
 
-    if (this.itemsCopy) {
-      this.items.set(this.itemsCopy)
-      this.itemsCopy = undefined
-    }
-
-    this.removeDragPreview()
-
-    if (
-      (!event.location.current.dropTargets.length || !event.location.initial.dropTargets.length) ||
-      event.location.current.dropTargets[0].data['item'] === event.location.initial.dropTargets[0].data['item']) {
+    // Restore expand state of items
+    if (!this.itemsCopy) {
       return
     }
 
-    const draggedItem = event.location.initial.dropTargets[0].data['item'] as Item
-    const draggedIndex = this.items().findIndex(item => item.id === draggedItem.id)
-
-    const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
-    const offset = closestEdge === 'top' ? 0 : 0
-
-    this.items.update(items => {
-      items.splice(draggedIndex, 1)
-
-      const dropTarget = event.location.current.dropTargets[0].data['item'] as Item
-      const dropIndex = this.items().findIndex(item => item.id === dropTarget.id)
-
-      items.splice(dropIndex + offset, 0, draggedItem)
-      return [...items]
-    })
-
-    this.dragDropService.items.set(this.items())
+    this.items.set([...this.itemsCopy])
+    this.itemsCopy = undefined
   }
 
-  private removeDragPreview(): void {
-    this.previewComponentRef?.destroy()
-    this.previewComponentRef = undefined
+  setDragPreviewInputs(componentRef: ComponentRef<ItemDragPreviewComponent>, item: Item): void {
+    this.dragPreviewComponentRef = componentRef
+    componentRef.setInput('item', item)
+  }
+
+  onDropTargetDragged(event: BaseEventPayload<ElementDragType>): void {
+    try {
+      const closestEdge = extractClosestEdge(event.location.current.dropTargets[0]?.data)
+
+      this.dragPreviewComponentRef.setInput('dropItem', event.location.current.dropTargets[0]?.data['item'])
+      this.dragPreviewComponentRef.setInput('dropEdge', closestEdge)
+    } catch (_) {}
   }
 }

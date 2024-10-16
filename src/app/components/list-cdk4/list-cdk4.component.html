@@ -1,18 +1,34 @@
 <section class="list-wrapper" cdkVirtualScrollingElement>
-    <h1>List using Angular CDK Virtual Scroll + Pragmatic</h1>
+  <h1>List using Angular CDK Virtual Scroll + Pragmatic</h1>
 
-    <cdk-virtual-scroll-viewport
-            customVirtualScrollStrategy
-            [itemHeights]="itemHeights()"
-            class="example-viewport"
-    >
-        <app-item
-            *cdkVirtualFor="let item of items(); index as i; trackBy: trackById"
-            [attr.data-index]="i"
-            class="example-item"
-            [item]="item"
-            (itemChange)="onItemChanged($event)"
-        />
-    </cdk-virtual-scroll-viewport>
+  <cdk-virtual-scroll-viewport
+    customVirtualScrollStrategy
+    [itemHeights]="itemHeights()"
+    class="example-viewport"
+
+    appDrop
+    [dropScrollingElementSelector]="'.list-wrapper'"
+    [dropItems]="items()"
+    (onItemsReordered)="onItemsReordered($event)"
+    (onDropped)="onDropped()"
+  >
+    <app-item
+      *cdkVirtualFor="let item of items(); trackBy: trackById"
+      class="example-item"
+      [item]="item"
+      (itemChange)="onItemChanged($event)"
+
+      appDrag
+      [dragItem]="item"
+      [dragAllowedEdges]="['top', 'bottom']"
+      [dragPlaceholderSize]="item.type === 'header' ? HEADER_SIZE : ITEM_SIZE"
+      [dragDisableNativePreview]="true"
+      [dragPreviewComponent]="ItemDragPreviewComponent"
+      [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
+      (onDragStarted)="onDragStarted(item)"
+      (onDragPreviewCreated)="setDragPreviewInputs($event, item)"
+      (onDropTargetDragged)="onDropTargetDragged($event)"
+    />
+  </cdk-virtual-scroll-viewport>
 </section>
 
