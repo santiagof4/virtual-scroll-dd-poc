@@ -184,11 +184,15 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   private getData({input, element}: { input: Input, element: Element }): Record<string | symbol, unknown> {
     const data = {item: this.dragItem()}
 
-    return attachClosestEdge(data, {
-      input,
-      element,
-      allowedEdges: this.dragAllowedEdges()
-    })
+    if (this.dragAllowedEdges()?.length) {
+      return attachClosestEdge(data, {
+        input,
+        element,
+        allowedEdges: this.dragAllowedEdges()
+      })
+    }
+
+    return data
   }
 
   /**
@@ -196,9 +200,12 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDropTargetDrag(event: BaseEventPayload<ElementDragType>): void {
-    const dragMoved =
-      event.location.current.dropTargets[0]?.data['item'] !== event.location.initial.dropTargets[0]?.data['item']
-    this.dragDropService.dragMoved.set(dragMoved)
+    if (!this.dragDropService.dragMoved()) {
+      const currentPositionItem = event.location.current.dropTargets[0]?.data['item'] as I
+      const initialPositionItem = event.location.initial.dropTargets[0]?.data['item'] as I
+
+      this.dragDropService.dragMoved.set(currentPositionItem?.id !== initialPositionItem?.id)
+    }
 
     this.onDropTargetDragged.emit(event)
   }
