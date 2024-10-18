@@ -82,10 +82,6 @@ export class ListCdk4Component implements OnInit {
    */
   private getItemsHeights(): number[] {
     return this.items().map(item => {
-      if (this.draggedItem()?.id === item.id) {
-        return 0
-      }
-
       switch (item.type) {
         case 'header':
           return (item.expanded ? 150 : 100)

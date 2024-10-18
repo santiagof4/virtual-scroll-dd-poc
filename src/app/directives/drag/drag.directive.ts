@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   ComponentRef,
+  computed,
   Directive,
   ElementRef,
   HostBinding,
@@ -25,15 +26,15 @@ import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unha
 })
 export class DragDirective<I extends { id: string }, C = any> implements AfterViewInit, OnDestroy {
   private elementRef = inject(ElementRef)
-  private dragDropService = inject(DragDropService<I>, { host: true })
+  private dragDropService = inject(DragDropService<I>, {host: true})
 
   dragItem = input.required<I>()
-  dragPlaceholderSize = input<number>()
+  dragPlaceholderSize = input<{ width?: number, height?: number }>()
   dragDisableNativePreview = input<boolean>()
   dragAllowedEdges = input<Edge[]>()
   dragCanDrop = input<boolean>(true)
   dragPreviewComponent = input<Type<C>>()
-  dragPreviewOffset = input<{ x: number, y: number }>({ x: 0, y: 0 })
+  dragPreviewOffset = input<{ x: number, y: number }>({x: 0, y: 0})
 
   onDragStarted = output<BaseEventPayload<ElementDragType>>()
   onDragged = output<BaseEventPayload<ElementDragType>>()
@@ -43,6 +44,8 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   onDropTargetDragEntered = output<BaseEventPayload<ElementDragType>>()
   onDropTargetDragLeft = output<BaseEventPayload<ElementDragType>>()
   onDropped = output<BaseEventPayload<ElementDragType>>()
+
+  private dragItemIndex = computed(() => this.dragDropService.itemIndexes.get(this.dragItem().id))
 
   private destroyed: boolean
 
@@ -54,30 +57,37 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     const style: Partial<CSSStyleDeclaration> = {}
 
     if (this.dragDropService.isDragging()) {
-      style.transition = 'margin 0.2s'
+      style.transition = 'transform 0.2s'
     }
 
-    // Drop placeholder
-    if (this.dragDropService.draggingOverItem()?.id === this.dragItem().id && this.dragDropService.dragData()) {
-      style.marginTop = `${this.dragPlaceholderSize()}px`
-    }
-
-    // Dragging item initial hiding
+    // Dragging item hiding
     if (this.dragDropService.dragData()?.id === this.dragItem().id) {
       style.opacity = '0'
     }
 
-    // Dragging item hiding
-    if (
-      this.dragDropService.isDragging() &&
-      this.dragDropService.dragMoved() &&
-      this.dragDropService.dragData()?.id === this.dragItem().id
-    ) {
-      style.height = '0px'
-      style.padding = '0px'
-      style.border = 'none'
-      style.margin = '0px'
-      style.transition = 'height 0.2s, padding 0.2s, border 0.2s, margin 0.2s'
+    // Drop placeholder
+    if (this.dragDropService.dragData() && this.dragDropService.draggingOverItem()) {
+      const {dragInitialIndex, dragOverIndex, itemIndex} = {
+        dragInitialIndex: this.dragDropService.dragInitialIndex(),
+        dragOverIndex: this.dragDropService.dragOverIndex(),
+        itemIndex: this.dragItemIndex()
+      }
+
+      const placeholderSize = this.dragDropService.placeholderSize()
+
+      if (this.dragDropService.dragDirection() === 'down') {
+        if (itemIndex > dragInitialIndex && itemIndex <= dragOverIndex) {
+          style.transform = `translateY(-${placeholderSize.height}px)`
+        } else if (itemIndex <= dragInitialIndex && itemIndex > dragOverIndex) {
+          style.transform = `translateY(${placeholderSize.height}px)`
+        }
+      } else if (this.dragDropService.dragDirection() === 'up') {
+        if (itemIndex < dragInitialIndex && itemIndex >= dragOverIndex) {
+          style.transform = `translateY(${placeholderSize.height}px)`
+        } else if (itemIndex >= dragInitialIndex && itemIndex < dragOverIndex) {
+          style.transform = `translateY(-${placeholderSize.height}px)`
+        }
+      }
     }
 
     return style
@@ -125,6 +135,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    */
   private getInitialData(): { item: I } {
     this.dragDropService.dragData.set(this.dragItem())
+
     return {item: this.dragItem()}
   }
 
@@ -149,6 +160,16 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    */
   private onDragStart(event: BaseEventPayload<ElementDragType>): void {
     this.dragDropService.isDragging.set(true)
+    this.dragDropService.dragDataSize.set({
+      width: event.source.element.offsetWidth,
+      height: event.source.element.offsetHeight
+    })
+    this.dragDropService.dragPosition.set({
+      x: event.location.current.input.clientX,
+      y: event.location.current.input.clientY
+    })
+    this.dragDropService.placeholderSize.set(this.dragPlaceholderSize() || this.dragDropService.dragDataSize())
+
     preventUnhandled.start()
 
     this.onDragStarted.emit(event)
@@ -207,6 +228,24 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
       this.dragDropService.dragMoved.set(currentPositionItem?.id !== initialPositionItem?.id)
     }
 
+    const currentPosition = {x: event.location.current.input.clientX, y: event.location.current.input.clientY}
+
+    if (currentPosition.y !== this.dragDropService.dragPosition().y) {
+      const direction = currentPosition.y > this.dragDropService.dragPosition().y ? 'down' : 'up'
+
+      if (this.dragDropService.dragDirectionChange() !== direction) {
+        this.dragDropService.dragDirectionChange.set(direction)
+        this.dragDropService.dragDirectionChangeCoordinates.set(currentPosition)
+      }
+
+      // Check if the drag direction has changed at in at least 10px
+      if ((!this.dragDropService.dragDirection() || Math.abs(currentPosition.y - this.dragDropService.dragDirectionChangeCoordinates().y) > 10)) {
+        this.dragDropService.dragDirection.set(direction)
+      }
+    }
+
+    this.dragDropService.dragPosition.set(currentPosition)
+
     this.onDropTargetDragged.emit(event)
   }
 
@@ -235,10 +274,6 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDrop(event: BaseEventPayload<ElementDragType>): void {
-    this.dragDropService.isDragging.set(false)
-    this.dragDropService.draggingOverItem.set(undefined)
-    this.dragDropService.dragMoved.set(false)
-
     if (!this.destroyed) {
       this.onDropped.emit(event)
     }

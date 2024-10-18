@@ -21,7 +21,7 @@
       appDrag
       [dragItem]="item"
       [dragAllowedEdges]="['top', 'bottom']"
-      [dragPlaceholderSize]="item.type === 'header' ? HEADER_SIZE : ITEM_SIZE"
+      [dragPlaceholderSize]="{ height: item.type === 'header' ? HEADER_SIZE : ITEM_SIZE }"
       [dragPreviewComponent]="ItemDragPreviewComponent"
       [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
       (onDragStarted)="onDragStarted(item)"

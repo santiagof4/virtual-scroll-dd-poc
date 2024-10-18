@@ -1,4 +1,4 @@
-import { AfterViewInit, Directive, inject, input, model, output, ViewContainerRef } from '@angular/core'
+import { AfterViewInit, Directive, effect, inject, input, model, output, ViewContainerRef } from '@angular/core'
 import { DragDropService } from '../../services/drag-drop.service'
 
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
@@ -23,6 +23,15 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
   onDragged = output<BaseEventPayload<ElementDragType>>()
   onDropped = output<BaseEventPayload<ElementDragType>>()
   onItemsReordered = output<I[]>()
+
+  constructor() {
+    effect(() => {
+      this.dragDropService.itemIndexes.clear()
+      this.dropItems().forEach((item, index) => {
+        this.dragDropService.itemIndexes.set(item.id, index)
+      })
+    })
+  }
 
   ngAfterViewInit(): void {
     this.initDragDrop()
@@ -73,12 +82,13 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private onDrop(event: BaseEventPayload<ElementDragType>) {
-    this.dragDropService.dragData.set(undefined)
     this.removeDragPreview()
 
     this.onDropped.emit(event)
 
     this.reorderItems(event)
+
+    this.dragDropService.reset()
   }
 
   /**
@@ -94,17 +104,17 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private reorderItems(event: BaseEventPayload<ElementDragType>): void {
-    if (
-      (!event.location.current.dropTargets.length || !event.location.initial.dropTargets.length) ||
-      event.location.current.dropTargets[0].data['item'] === event.location.initial.dropTargets[0].data['item']) {
+    const draggedItem = event.location.initial.dropTargets[0]?.data['item'] as I
+    const dropTargetItem = event.location.current.dropTargets[0]?.data['item'] as I
+
+    if (!draggedItem || !dropTargetItem || draggedItem.id === dropTargetItem.id) {
       return
     }
 
-    const draggedItem = event.location.initial.dropTargets[0].data['item'] as I
     const draggedIndex = this.dropItems().findIndex(item => item.id === draggedItem.id)
 
     const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
-    const offset = closestEdge === 'top' ? 0 : 0
+    const offset = closestEdge === 'top' ? 0 : 1
 
     this.dropItems.update(items => {
       items.splice(draggedIndex, 1)
