@@ -12,6 +12,7 @@ export class DragDropService<I extends { id: string }> {
   placeholderSize = signal<{ width?: number; height?: number } | undefined>(undefined)
 
   dragPosition = signal<{ x: number; y: number } | undefined>(undefined)
+  dragInitialPosition = signal<{ x: number; y: number } | undefined>(undefined)
   dragDirection = signal<'up' | 'down' | undefined>(undefined)
   dragDirectionChange = signal<'up' | 'down' | undefined>(undefined)
   dragDirectionChangeCoordinates = signal<{ x: number; y: number } | undefined>(undefined)
@@ -34,6 +35,7 @@ export class DragDropService<I extends { id: string }> {
     this.dragData.set(undefined)
     this.dragDataSize.set(undefined)
     this.dragPosition.set(undefined)
+    this.dragInitialPosition.set(undefined)
     this.dragDirection.set(undefined)
     this.dragDirectionChange.set(undefined)
     this.dragDirectionChangeCoordinates.set(undefined)

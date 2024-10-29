@@ -14,11 +14,20 @@ import {
 import { DragDropService } from '../../services/drag-drop.service'
 import type { SafeStyle } from '@angular/platform-browser'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
-import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { draggable, dropTargetForElements, ElementDropTargetEventBasePayload } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { disableNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview'
-import { attachClosestEdge, Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
+import { attachClosestEdge, Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
 import { BaseEventPayload, ElementDragType, Input } from '@atlaskit/pragmatic-drag-and-drop/types'
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled'
+
+interface DropTargetEventInfo<I> {
+  dragData: I
+  dropData: I
+  closestEdge: Edge
+  indented: boolean
+}
+
+export type DropTargetEvent<I> = ElementDropTargetEventBasePayload & DropTargetEventInfo<I>
 
 @Directive({
   selector: '[appDrag]',
@@ -35,15 +44,17 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   dragCanDrop = input<boolean>(true)
   dragPreviewComponent = input<Type<C>>()
   dragPreviewOffset = input<{ x: number, y: number }>({x: 0, y: 0})
+  dragIndentThreshold = input<number>()
 
   onDragStarted = output<BaseEventPayload<ElementDragType>>()
   onDragged = output<BaseEventPayload<ElementDragType>>()
   onDragPreviewCreated = output<ComponentRef<C>>()
-
-  onDropTargetDragged = output<BaseEventPayload<ElementDragType>>()
-  onDropTargetDragEntered = output<BaseEventPayload<ElementDragType>>()
-  onDropTargetDragLeft = output<BaseEventPayload<ElementDragType>>()
   onDropped = output<BaseEventPayload<ElementDragType>>()
+
+  onDropTargetDragged = output<DropTargetEvent<I>>()
+  onDropTargetDragEntered = output<DropTargetEvent<I>>()
+  onDropTargetDragLeft = output<DropTargetEvent<I>>()
+  onDropTargetDropped = output<DropTargetEvent<I>>()
 
   private dragItemIndex = computed(() => this.dragDropService.itemIndexes.get(this.dragItem().id))
 
@@ -122,7 +133,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
         onDrag: event => this.onDropTargetDrag(event),
         onDragEnter: event => this.onDropTargetDragEnter(event),
         onDragLeave: event => this.onDropTargetDragLeave(event),
-        onDrop: event => this.onDrop(event)
+        onDrop: event => this.onDropTargetDrop(event)
       })
     )
   }
@@ -168,6 +179,10 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
       x: event.location.current.input.clientX,
       y: event.location.current.input.clientY
     })
+    this.dragDropService.dragInitialPosition.set({
+      x: event.location.current.input.clientX,
+      y: event.location.current.input.clientY
+    })
     this.dragDropService.placeholderSize.set(this.dragPlaceholderSize() || this.dragDropService.dragDataSize())
 
     preventUnhandled.start()
@@ -194,6 +209,18 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     }
   }
 
+  /**
+   * Handles the drop event
+   * @param {BaseEventPayload<ElementDragType>} event
+   */
+  private onDrop(event: BaseEventPayload<ElementDragType>): void {
+    if (!this.destroyed) {
+      this.onDropped.emit(event)
+    }
+  }
+
+  /**
+
 
   /**
    * Drop target config and event handlers
@@ -203,10 +230,10 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * @param {Element} element
    */
   private getData({input, element}: { input: Input, element: Element }): Record<string | symbol, unknown> {
-    const data = {item: this.dragItem()}
+    let data: Record<string | symbol, unknown> = { item: this.dragItem() }
 
     if (this.dragAllowedEdges()?.length) {
-      return attachClosestEdge(data, {
+      data = attachClosestEdge(data, {
         input,
         element,
         allowedEdges: this.dragAllowedEdges()
@@ -220,7 +247,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * Handles the drag event on the drop target
    * @param {BaseEventPayload<ElementDragType>} event
    */
-  private onDropTargetDrag(event: BaseEventPayload<ElementDragType>): void {
+  private onDropTargetDrag(event: ElementDropTargetEventBasePayload): void {
     if (!this.dragDropService.dragMoved()) {
       const currentPositionItem = event.location.current.dropTargets[0]?.data['item'] as I
       const initialPositionItem = event.location.initial.dropTargets[0]?.data['item'] as I
@@ -246,26 +273,26 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
 
     this.dragDropService.dragPosition.set(currentPosition)
 
-    this.onDropTargetDragged.emit(event)
+    this.onDropTargetDragged.emit(this.getDropTargetEventInfo(event))
   }
 
   /**
    * Handles the drag enter event on the drop target
    * @param {BaseEventPayload<ElementDragType>} event
    */
-  private onDropTargetDragEnter(event: BaseEventPayload<ElementDragType>): void {
+  private onDropTargetDragEnter(event: ElementDropTargetEventBasePayload): void {
     this.dragDropService.draggingOverItem.set(this.dragItem())
 
-    this.onDropTargetDragEntered.emit(event)
+    this.onDropTargetDragEntered.emit(this.getDropTargetEventInfo(event))
   }
 
   /**
    * Handles the drag leave event on the drop target
    * @param {BaseEventPayload<ElementDragType>} event
    */
-  private onDropTargetDragLeave(event: BaseEventPayload<ElementDragType>): void {
+  private onDropTargetDragLeave(event: ElementDropTargetEventBasePayload): void {
     if (!this.destroyed) {
-      this.onDropTargetDragLeft.emit(event)
+      this.onDropTargetDragLeft.emit(this.getDropTargetEventInfo(event))
     }
   }
 
@@ -273,9 +300,9 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
    * Handles the drop event on the drop target
    * @param {BaseEventPayload<ElementDragType>} event
    */
-  private onDrop(event: BaseEventPayload<ElementDragType>): void {
+  private onDropTargetDrop(event: ElementDropTargetEventBasePayload): void {
     if (!this.destroyed) {
-      this.onDropped.emit(event)
+      this.onDropped.emit(this.getDropTargetEventInfo(event))
     }
   }
 
@@ -299,5 +326,37 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     document.body.append(this.dragDropService.previewComponentRef.location.nativeElement)
 
     this.onDragPreviewCreated.emit(this.dragDropService.previewComponentRef)
+  }
+
+  /**
+   * Determines if the user drags the element to the right more than the threshold in px.
+   * @param {number} elementX
+   * @returns {boolean}
+   */
+  private getIndentDrag(elementX: number): boolean {
+    return this.dragDropService.dragInitialPosition() && this.dragIndentThreshold() > 0
+      ? elementX - this.dragDropService.dragInitialPosition().x > this.dragIndentThreshold()
+      : false
+  }
+
+  /**
+   * Gets the drop target event extra info and adds it to the original event
+   * @param {ElementDropTargetEventBasePayload} event
+   * @returns {DropTargetEvent<I>}
+   */
+  private getDropTargetEventInfo(event: ElementDropTargetEventBasePayload): DropTargetEvent<I> {
+    const dragData = event.source.data?.['item'] as I
+    let dropData: I
+    let closestEdge: Edge
+    let indented: boolean
+
+    dropData = event.self.data['item'] as I
+    closestEdge = extractClosestEdge(event.self.data)
+
+    if (this.dragIndentThreshold() > 0) {
+      indented = this.getIndentDrag(event.location.current.input.clientX)
+    }
+
+    return {...event, dragData, dropData, closestEdge, indented }
   }
 }

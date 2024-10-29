@@ -13,6 +13,7 @@ export class ItemDragPreviewComponent {
   item = input<Item>()
   dropItem = input<Item>()
   dropEdge = input<string>()
+  isIndented = input<boolean>()
 
   @HostBinding('class')
   get typeClass() {

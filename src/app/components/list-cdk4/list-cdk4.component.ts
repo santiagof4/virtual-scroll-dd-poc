@@ -11,12 +11,9 @@ import {
 import {
   CustomVirtualScrollDirective
 } from '../../directives/custom-virtual-scroll-strategy/custom-virtual-scroll-strategy.directive'
-import { DragDirective } from '../../directives/drag/drag.directive'
+import { DragDirective, DropTargetEvent } from '../../directives/drag/drag.directive'
 import { DropDirective } from '../../directives/drop/drop.directive'
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
-import { BaseEventPayload, ElementDragType } from '@atlaskit/pragmatic-drag-and-drop/types'
-import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge'
-
 
 @Component({
   selector: 'app-list',
@@ -135,12 +132,9 @@ export class ListCdk4Component implements OnInit {
     componentRef.setInput('item', item)
   }
 
-  onDropTargetDragged(event: BaseEventPayload<ElementDragType>): void {
-    try {
-      const closestEdge = extractClosestEdge(event.location.current.dropTargets[0]?.data)
-
-      this.dragPreviewComponentRef.setInput('dropItem', event.location.current.dropTargets[0]?.data['item'])
-      this.dragPreviewComponentRef.setInput('dropEdge', closestEdge)
-    } catch (_) {}
+  onDropTargetDragged(event: DropTargetEvent<Item>): void {
+    this.dragPreviewComponentRef.setInput('dropItem', event.dropData)
+    this.dragPreviewComponentRef.setInput('dropEdge', event.closestEdge)
+    this.dragPreviewComponentRef.setInput('isIndented', event.indented)
   }
 }
