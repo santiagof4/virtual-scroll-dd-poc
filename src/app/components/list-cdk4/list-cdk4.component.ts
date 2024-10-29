@@ -127,14 +127,45 @@ export class ListCdk4Component implements OnInit {
     this.itemsCopy = undefined
   }
 
+  /**
+   * Sets the drag preview inputs
+   * @param {ComponentRef<ItemDragPreviewComponent>} componentRef
+   * @param {Item} item
+   */
   setDragPreviewInputs(componentRef: ComponentRef<ItemDragPreviewComponent>, item: Item): void {
     this.dragPreviewComponentRef = componentRef
     componentRef.setInput('item', item)
   }
 
-  onDropTargetDragged(event: DropTargetEvent<Item>): void {
+  /**
+   * Handles the drag target dragged event
+   * @param {DropTargetEvent<Partial<Item>>} event
+   */
+  onDropTargetDragged(event: DropTargetEvent<Partial<Item>>): void {
     this.dragPreviewComponentRef.setInput('dropItem', event.dropData)
     this.dragPreviewComponentRef.setInput('dropEdge', event.closestEdge)
     this.dragPreviewComponentRef.setInput('isIndented', event.indented)
+  }
+
+  /**
+   * Determines if the item can be dropped at the target
+   * @param {Item} dragItem
+   * @param {Item} dropTargetItem
+   * @returns {boolean}
+   */
+  canDrop(dragItem: Item, dropTargetItem: Item): boolean {
+    const dropItemIndex = this.items().findIndex(item => item.id === dropTargetItem.id)
+
+    // Headers can be dropped only on another header or at the top
+    if (dragItem.type === 'header') {
+      return dragItem.type === dropTargetItem.type || dropItemIndex === 0
+    }
+
+    // Items can be dropped only after another item
+    if (dragItem.type === 'item') {
+      return dropItemIndex > 0
+    }
+
+    return false
   }
 }

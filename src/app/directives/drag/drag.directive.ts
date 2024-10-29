@@ -41,7 +41,8 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   dragPlaceholderSize = input<{ width?: number, height?: number }>()
   dragDisableNativePreview = input<boolean>()
   dragAllowedEdges = input<Edge[]>()
-  dragCanDrop = input<boolean>(true)
+  dragCanDrag = input<boolean | ((dragItem: I) => boolean)>(true)
+  dragCanDrop = input<boolean | ((dragItem: I, dropTargetItem: I) => boolean)>(true)
   dragPreviewComponent = input<Type<C>>()
   dragPreviewOffset = input<{ x: number, y: number }>({x: 0, y: 0})
   dragIndentThreshold = input<number>()
@@ -120,6 +121,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
       draggable({
         element: this.elementRef.nativeElement,
         getInitialData: () => this.getInitialData(),
+        canDrag: () => this.canDrag(),
         onGenerateDragPreview: event => this.onGenerateDragPreview(event),
         onDragStart: event => this.onDragStart(event),
         onDrag: event => this.onDrag(event),
@@ -129,7 +131,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
         element: this.elementRef.nativeElement,
         getIsSticky: () => true,
         getData: args => this.getData(args),
-        canDrop: () => this.dragCanDrop(),
+        canDrop: () => this.canDrop(),
         onDrag: event => this.onDropTargetDrag(event),
         onDragEnter: event => this.onDropTargetDragEnter(event),
         onDragLeave: event => this.onDropTargetDragLeave(event),
@@ -148,6 +150,16 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     this.dragDropService.dragData.set(this.dragItem())
 
     return {item: this.dragItem()}
+  }
+
+  /**
+   * Determines if the item can be dragged
+   * @returns {boolean}
+   */
+  private canDrag(): boolean {
+    const canDrag = this.dragCanDrag()
+
+    return typeof canDrag === 'boolean' ? canDrag : canDrag(this.dragItem())
   }
 
   /**
@@ -219,8 +231,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     }
   }
 
-  /**
-
+  /** Drop target config and event handlers **/
 
   /**
    * Drop target config and event handlers
@@ -241,6 +252,16 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
     }
 
     return data
+  }
+
+  /**
+   * Determines if an item can be dropped on the drop target
+   * @returns {boolean}
+   */
+  private canDrop(): boolean {
+    const canDrop = this.dragCanDrop()
+
+    return typeof canDrop === 'boolean' ? canDrop : canDrop(this.dragDropService.dragData(), this.dragItem())
   }
 
   /**

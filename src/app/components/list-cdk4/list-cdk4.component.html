@@ -25,6 +25,7 @@
       [dragPreviewComponent]="ItemDragPreviewComponent"
       [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
       [dragIndentThreshold]="50"
+      [dragCanDrop]="canDrop.bind(this)"
       (onDragStarted)="onDragStarted(item)"
       (onDragPreviewCreated)="setDragPreviewInputs($event, item)"
       (onDropTargetDragged)="onDropTargetDragged($event)"
