@@ -3,13 +3,23 @@
   flex-direction: column;
   width: 100%;
   //transition: all .2s ease-in-out;
-  border-bottom: 1px solid #000;
   box-sizing: border-box;
-  padding: 10px;
+  position: relative;
+  border-left: 3px solid #d3d3d3;
+  border-right: 3px solid #d3d3d3;
+
+  section {
+    display: flex;
+    height: 100%;
+    margin: 0 10px;
+    padding: 0 10px;
+    border-bottom: 1px solid #3b3b3b;
+    align-items: center;
+  }
 
   h6 {
     cursor: pointer;
-    margin: 0 0 10px 0;
+    margin: 0;
   }
 
   article {
@@ -18,6 +28,7 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    border-bottom: 1px solid #000;
 
     p {
       margin: 0;
@@ -51,6 +62,47 @@
 
     &.expanded {
       height: 200px;
+    }
+  }
+
+  &.dragging {
+    section {
+      border: none;
+
+      > * {
+        opacity: 0;
+      }
+    }
+  }
+
+  ::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: -3px;
+    width: 100%;
+    height: 0;
+    z-index: 999;
+    border-left: 3px solid #d3d3d3;
+    border-right: 3px solid #d3d3d3;
+    transition: height .2s, top .2s;
+    transition-delay: .2s;
+    pointer-events: none;
+  }
+
+  &.moved-up {
+    ::after {
+      top: 100%;
+      height: 100%;
+      transition: none;
+    }
+  }
+
+  &.moved-down {
+    ::after {
+      top: -100%;
+      height: 100%;
+      transition: none;
     }
   }
 }

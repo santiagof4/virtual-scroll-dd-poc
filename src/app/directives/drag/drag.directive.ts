@@ -58,6 +58,7 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   onDropTargetDropped = output<DropTargetEvent<I>>()
 
   private dragItemIndex = computed(() => this.dragDropService.itemIndexes.get(this.dragItem().id))
+  private appliedTransformDirection: 'up' | 'down' | undefined
 
   private destroyed: boolean
 
@@ -67,14 +68,10 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
   @HostBinding('style')
   get draggingStyle(): SafeStyle {
     const style: Partial<CSSStyleDeclaration> = {}
+    this.appliedTransformDirection = undefined
 
     if (this.dragDropService.isDragging()) {
       style.transition = 'transform 0.2s'
-    }
-
-    // Dragging item hiding
-    if (this.dragDropService.dragData()?.id === this.dragItem().id) {
-      style.opacity = '0'
     }
 
     // Drop placeholder
@@ -90,19 +87,43 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
       if (this.dragDropService.dragDirection() === 'down') {
         if (itemIndex > dragInitialIndex && itemIndex <= dragOverIndex) {
           style.transform = `translateY(-${placeholderSize.height}px)`
+          this.appliedTransformDirection = 'up'
         } else if (itemIndex <= dragInitialIndex && itemIndex > dragOverIndex) {
           style.transform = `translateY(${placeholderSize.height}px)`
+          this.appliedTransformDirection = 'down'
         }
       } else if (this.dragDropService.dragDirection() === 'up') {
         if (itemIndex < dragInitialIndex && itemIndex >= dragOverIndex) {
           style.transform = `translateY(${placeholderSize.height}px)`
+          this.appliedTransformDirection = 'down'
         } else if (itemIndex >= dragInitialIndex && itemIndex < dragOverIndex) {
           style.transform = `translateY(-${placeholderSize.height}px)`
+          this.appliedTransformDirection = 'up'
         }
       }
     }
 
     return style
+  }
+
+  /**
+   * Applies classes for the dragging item and the item being dragged over
+   */
+  @HostBinding('class')
+  get draggingClass(): string {
+    let classes = ''
+
+    if (this.appliedTransformDirection === 'up') {
+      classes = 'moved-up'
+    } else if (this.appliedTransformDirection === 'down') {
+      classes = 'moved-down'
+    }
+
+    if (this.dragDropService.dragData()?.id === this.dragItem().id) {
+      classes += ' dragging'
+    }
+
+    return classes
   }
 
   ngAfterViewInit(): void {
