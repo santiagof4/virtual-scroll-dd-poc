@@ -5,13 +5,12 @@ import { ItemComponent } from '../item/item.component'
 import Sortable from 'sortablejs'
 
 @Component({
-  selector: 'app-list',
-  standalone: true,
-  imports: [ItemComponent
-  ],
-  templateUrl: './list.component.html',
-  styleUrl: './list.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list',
+    imports: [ItemComponent
+    ],
+    templateUrl: './list.component.html',
+    styleUrl: './list.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListComponent implements OnInit {
   items: Item[] = []

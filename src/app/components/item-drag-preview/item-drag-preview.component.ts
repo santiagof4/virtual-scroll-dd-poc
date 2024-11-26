@@ -2,12 +2,11 @@ import { ChangeDetectionStrategy, Component, HostBinding, input } from '@angular
 import { Item } from '../../models/item.model'
 
 @Component({
-  selector: 'app-item-drag-preview',
-  standalone: true,
-  imports: [],
-  templateUrl: './item-drag-preview.component.html',
-  styleUrl: './item-drag-preview.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-item-drag-preview',
+    imports: [],
+    templateUrl: './item-drag-preview.component.html',
+    styleUrl: './item-drag-preview.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemDragPreviewComponent {
   item = input<Item>()
