@@ -15,7 +15,7 @@ import Sortable from 'sortablejs'
         /*RxVirtualScrollViewportComponent,
         DynamicSizeVirtualScrollStrategy,
         RxVirtualFor,*/
-        ItemComponent
+        //ItemComponent
     ],
     templateUrl: './list-rx.component.html',
     styleUrl: './list-rx.component.scss',

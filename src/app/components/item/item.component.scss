@@ -2,13 +2,25 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  //transition: all .2s ease-in-out;
   box-sizing: border-box;
   position: relative;
-  border-left: 3px solid #d3d3d3;
-  border-right: 3px solid #d3d3d3;
 
   section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  &.header, &.item {
+    &:not(.dragging.moved-up):not(.dragging.moved-down) {
+      section {
+        border-left: 3px solid #d3d3d3;
+        border-right: 3px solid #d3d3d3;
+      }
+    }
+  }
+
+  article {
     display: flex;
     height: 100%;
     margin: 0 10px;
@@ -16,7 +28,7 @@
     align-items: center;
   }
 
-  &:not(.last-of-group) section {
+  &:not(.last-of-group) article {
     border-bottom: 1px solid #3b3b3b;
   }
 
@@ -27,8 +39,6 @@
 
   article {
     flex: 1;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     border-bottom: 1px solid #000;
@@ -69,7 +79,7 @@
   }
 
   &.dragging {
-    section {
+    article {
       border: none;
 
       > * {
@@ -78,19 +88,21 @@
     }
   }
 
-  ::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: -3px;
-    width: 100%;
-    height: 0;
-    z-index: 999;
-    border-left: 3px solid #d3d3d3;
-    border-right: 3px solid #d3d3d3;
-    transition: height .2s, top .2s;
-    transition-delay: .2s;
-    pointer-events: none;
+  &.header, &.item {
+    ::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      height: 0;
+      z-index: 999;
+      border-left: 3px solid #d3d3d3;
+      border-right: 3px solid #d3d3d3;
+      transition: height .2s, top .2s;
+      transition-delay: .2s;
+      pointer-events: none;
+    }
   }
 
   &.moved-up:not(.last-of-group) {
@@ -113,23 +125,42 @@
     height: 30px;
     border: none;
 
-    section {
+    article {
       padding: 0;
       margin: 0;
       height: 10px;
       border: 3px solid #d3d3d3;
     }
 
-    &.separator-top section{
-      border-bottom: none;
-      border-radius: 10px 10px 0 0;
-      margin-top: 20px;
+    &.separator-top {
+      article {
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        margin-top: 20px;
+      }
     }
 
-    &.separator-bottom section{
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      margin-bottom: 20px;
+    &.separator-bottom {
+      article {
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        margin-bottom: 20px;
+      }
+
+      ::after {
+        content: '';
+        position: absolute;
+        top: -34px;
+        left: 0;
+        width: 100%;
+        height: 34px;
+        z-index: 999;
+        border-left: 3px solid #d3d3d3;
+        border-right: 3px solid #d3d3d3;
+        transition: height .2s, top .2s;
+        transition-delay: .2s;
+        pointer-events: none;
+      }
     }
   }
 }
