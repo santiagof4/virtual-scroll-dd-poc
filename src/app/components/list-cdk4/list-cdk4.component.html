@@ -13,9 +13,10 @@
     (onDropped)="onDropped()"
   >
     <app-item
-      *cdkVirtualFor="let item of items(); trackBy: trackById"
+      *cdkVirtualFor="let item of items(); index as i; trackBy: trackById"
       class="example-item"
       [item]="item"
+      [nextItem]="items()[i + 1]"
       (itemChange)="onItemChanged($event)"
 
       appDrag
@@ -25,6 +26,7 @@
       [dragPreviewComponent]="ItemDragPreviewComponent"
       [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
       [dragIndentThreshold]="50"
+      [dragCanDrag]="item.type !== 'separator'"
       [dragCanDrop]="canDrop.bind(this)"
       (onDragStarted)="onDragStarted(item)"
       (onDragPreviewCreated)="setDragPreviewInputs($event, item)"

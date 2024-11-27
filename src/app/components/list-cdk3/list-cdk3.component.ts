@@ -14,7 +14,6 @@ import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
 import {
-  CdkFixedSizeVirtualScroll,
   CdkVirtualForOf,
   CdkVirtualScrollableElement,
   CdkVirtualScrollViewport
@@ -28,19 +27,17 @@ import { Subscription } from 'rxjs'
 import dragula, { Dragula, Drake } from 'dragula'
 
 @Component({
-  selector: 'app-list',
-  standalone: true,
-  imports: [
-    ItemComponent,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement
-  ],
-  templateUrl: './list-cdk3.component.html',
-  styleUrl: './list-cdk3.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list',
+    imports: [
+        ItemComponent,
+        CdkVirtualScrollViewport,
+        CdkVirtualForOf,
+        CustomVirtualScrollDirective,
+        CdkVirtualScrollableElement
+    ],
+    templateUrl: './list-cdk3.component.html',
+    styleUrl: './list-cdk3.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListCdk3Component implements OnInit {
   private destroyRef = inject(DestroyRef)
@@ -255,6 +252,8 @@ export class ListCdk3Component implements OnInit {
           return (item.expanded ? 100 : 50) + marginTop
         case 'item':
           return item.expanded ? 200 : 34
+        case 'separator':
+          return 10
       }
     })
   }

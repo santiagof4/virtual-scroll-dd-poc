@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, ComponentRef, computed, OnInit, signal, Type } from '@angular/core'
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ComponentRef,
+  computed,
+  OnInit,
+  signal,
+  Type,
+  viewChild
+} from '@angular/core'
 import { HEADER_SIZE, Item, ITEM_SIZE } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
 import {
-  CdkFixedSizeVirtualScroll,
   CdkVirtualForOf,
   CdkVirtualScrollableElement,
   CdkVirtualScrollViewport
@@ -16,23 +25,23 @@ import { DropDirective } from '../../directives/drop/drop.directive'
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
 
 @Component({
-  selector: 'app-list',
-  standalone: true,
-  imports: [
-    ItemComponent,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement,
-    DragDirective,
-    DropDirective
-  ],
-  templateUrl: './list-cdk4.component.html',
-  styleUrl: './list-cdk4.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list',
+    imports: [
+        ItemComponent,
+        CdkVirtualScrollViewport,
+        CdkVirtualForOf,
+        CustomVirtualScrollDirective,
+        CdkVirtualScrollableElement,
+        DragDirective,
+        DropDirective
+    ],
+    templateUrl: './list-cdk4.component.html',
+    styleUrl: './list-cdk4.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ListCdk4Component implements OnInit {
+export class ListCdk4Component implements OnInit, AfterViewInit {
+  viewport = viewChild.required(CdkVirtualScrollViewport)
+
   items = signal<Item[]>([])
   itemsCopy: Item[] | undefined
 
@@ -46,6 +55,13 @@ export class ListCdk4Component implements OnInit {
 
   ngOnInit(): void {
     this.mockData()
+  }
+
+  ngAfterViewInit(): void {
+    // Workaround for the issue with the virtual scroll not updating the viewport size (cutting off the items)
+    setTimeout(() => {
+      this.viewport().checkViewportSize()
+    }, 100)
   }
 
   /**
@@ -81,9 +97,11 @@ export class ListCdk4Component implements OnInit {
     return this.items().map(item => {
       switch (item.type) {
         case 'header':
-          return (item.expanded ? 150 : 100)
+          return (item.expanded ? 150 : 70)
         case 'item':
           return item.expanded ? 200 : 34
+        case 'separator':
+          return 30
       }
     })
   }
@@ -156,14 +174,18 @@ export class ListCdk4Component implements OnInit {
   canDrop(dragItem: Item, dropTargetItem: Item): boolean {
     const dropItemIndex = this.items().findIndex(item => item.id === dropTargetItem.id)
 
+    if (dropTargetItem.type === 'separator') {
+      return false
+    }
+
     // Headers can be dropped only on another header or at the top
     if (dragItem.type === 'header') {
-      return dragItem.type === dropTargetItem.type || dropItemIndex === 0
+      return dragItem.type === dropTargetItem.type && dropItemIndex === 0
     }
 
     // Items can be dropped only after another item
     if (dragItem.type === 'item') {
-      return dropItemIndex > 0
+      return dragItem.type === dropTargetItem.type && dropItemIndex > 0
     }
 
     return false

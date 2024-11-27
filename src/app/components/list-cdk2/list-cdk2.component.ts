@@ -14,7 +14,6 @@ import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
 import {
-  CdkFixedSizeVirtualScroll,
   CdkVirtualForOf,
   CdkVirtualScrollableElement,
   CdkVirtualScrollViewport
@@ -28,19 +27,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { Subscription } from 'rxjs'
 
 @Component({
-  selector: 'app-list',
-  standalone: true,
-  imports: [
-    ItemComponent,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement
-  ],
-  templateUrl: './list-cdk2.component.html',
-  styleUrl: './list-cdk2.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list',
+    imports: [
+        ItemComponent,
+        CdkVirtualScrollViewport,
+        CdkVirtualForOf,
+        CustomVirtualScrollDirective,
+        CdkVirtualScrollableElement
+    ],
+    templateUrl: './list-cdk2.component.html',
+    styleUrl: './list-cdk2.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListCdk2Component implements OnInit {
   private destroyRef = inject(DestroyRef)
@@ -224,6 +221,8 @@ export class ListCdk2Component implements OnInit {
           return (item.expanded ? 100 : 50) + marginTop
         case 'item':
           return item.expanded ? 200 : 34
+        case 'separator':
+          return 10
       }
     })
   }

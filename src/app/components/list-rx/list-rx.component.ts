@@ -7,27 +7,19 @@ import {
   RxVirtualScrollViewportComponent
 } from '@rx-angular/template/experimental/virtual-scrolling'
 import { ItemComponent } from '../item/item.component'
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop'
-import { CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport } from '@angular/cdk/scrolling'
 import Sortable from 'sortablejs'
 
 @Component({
-  selector: 'app-list-rx',
-  standalone: true,
-  imports: [
-    RxVirtualScrollViewportComponent,
-    DynamicSizeVirtualScrollStrategy,
-    RxVirtualFor,
-    ItemComponent,
-    CdkDropList,
-    CdkDrag,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf
-  ],
-  templateUrl: './list-rx.component.html',
-  styleUrl: './list-rx.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list-rx',
+    imports: [
+        RxVirtualScrollViewportComponent,
+        DynamicSizeVirtualScrollStrategy,
+        RxVirtualFor,
+        ItemComponent
+    ],
+    templateUrl: './list-rx.component.html',
+    styleUrl: './list-rx.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListRxComponent implements OnInit {
   items: Item[] = []
@@ -72,6 +64,8 @@ export class ListRxComponent implements OnInit {
         return (item.expanded ? 100 : 50) + marginTop
       case 'item':
         return item.expanded ? 200 : 34
+      case 'separator':
+        return 10
     }
   }
 

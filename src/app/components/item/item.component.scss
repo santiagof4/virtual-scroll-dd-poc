@@ -13,8 +13,11 @@
     height: 100%;
     margin: 0 10px;
     padding: 0 10px;
-    border-bottom: 1px solid #3b3b3b;
     align-items: center;
+  }
+
+  &:not(.last-of-group) section {
+    border-bottom: 1px solid #3b3b3b;
   }
 
   h6 {
@@ -36,11 +39,11 @@
   }
 
   &.header {
-    height: 100px;
+    height: 70px;
 
     h6 {
       font-size: 16px;
-      margin-top: 50px;
+      margin-top: 20px;
       margin-bottom: 20px;
     }
 
@@ -90,7 +93,7 @@
     pointer-events: none;
   }
 
-  &.moved-up {
+  &.moved-up:not(.last-of-group) {
     ::after {
       top: 100%;
       height: 100%;
@@ -98,11 +101,35 @@
     }
   }
 
-  &.moved-down {
+  &.moved-down:not(.header) {
     ::after {
       top: -100%;
       height: 100%;
       transition: none;
+    }
+  }
+
+  &.separator {
+    height: 30px;
+    border: none;
+
+    section {
+      padding: 0;
+      margin: 0;
+      height: 10px;
+      border: 3px solid #d3d3d3;
+    }
+
+    &.separator-top section{
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      margin-top: 20px;
+    }
+
+    &.separator-bottom section{
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      margin-bottom: 20px;
     }
   }
 }

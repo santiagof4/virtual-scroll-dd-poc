@@ -1,9 +1,11 @@
 <section class="wrapper">
-  <h6 (click)="toggleExpand()">{{ item().title }}</h6>
+  @if (item().type !== 'separator') {
+    <h6 (click)="toggleExpand()">{{ item().title }}</h6>
 
-  @if (item().expanded) {
-    <article>
-      <p>{{ item().description }}</p>
-    </article>
+    @if (item().expanded) {
+      <article>
+        <p>{{ item().description }}</p>
+      </article>
+    }
   }
 </section>

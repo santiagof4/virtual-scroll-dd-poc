@@ -3,7 +3,6 @@ import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
 import {
-  CdkFixedSizeVirtualScroll,
   CdkVirtualForOf,
   CdkVirtualScrollableElement,
   CdkVirtualScrollViewport
@@ -16,20 +15,18 @@ import { DragDropDirective } from '../../directives/drag-drop/drag-drop.directiv
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
 
 @Component({
-  selector: 'app-list',
-  standalone: true,
-  imports: [
-    ItemComponent,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CustomVirtualScrollDirective,
-    CdkVirtualScrollableElement,
-    DragDropDirective
-  ],
-  templateUrl: './list-cdk.component.html',
-  styleUrl: './list-cdk.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-list',
+    imports: [
+        ItemComponent,
+        CdkVirtualScrollViewport,
+        CdkVirtualForOf,
+        CustomVirtualScrollDirective,
+        CdkVirtualScrollableElement,
+        DragDropDirective
+    ],
+    templateUrl: './list-cdk.component.html',
+    styleUrl: './list-cdk.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListCdkComponent implements OnInit {
   viewportElement = viewChild.required(CdkVirtualScrollViewport)
@@ -67,6 +64,8 @@ export class ListCdkComponent implements OnInit {
           return (item.expanded ? 100 : 50) + marginTop
         case 'item':
           return item.expanded ? 200 : 34
+        case 'separator':
+          return 10
       }
     })
   }
