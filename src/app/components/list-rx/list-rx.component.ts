@@ -1,20 +1,20 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal, TrackByFunction, viewChild } from '@angular/core'
 import { Item } from '../../models/item.model'
 import { mockItems } from '../../models/item.mock'
-import {
+/*import {
   DynamicSizeVirtualScrollStrategy, ListRange,
   RxVirtualFor,
   RxVirtualScrollViewportComponent
-} from '@rx-angular/template/experimental/virtual-scrolling'
+} from '@rx-angular/template/experimental/virtual-scrolling'*/
 import { ItemComponent } from '../item/item.component'
 import Sortable from 'sortablejs'
 
 @Component({
     selector: 'app-list-rx',
     imports: [
-        RxVirtualScrollViewportComponent,
+        /*RxVirtualScrollViewportComponent,
         DynamicSizeVirtualScrollStrategy,
-        RxVirtualFor,
+        RxVirtualFor,*/
         ItemComponent
     ],
     templateUrl: './list-rx.component.html',
@@ -23,10 +23,10 @@ import Sortable from 'sortablejs'
 })
 export class ListRxComponent implements OnInit {
   items: Item[] = []
-  virtualScrollViewport = viewChild.required(RxVirtualScrollViewportComponent)
+  //virtualScrollViewport = viewChild.required(RxVirtualScrollViewportComponent)
 
   isDragging = signal<boolean>(false)
-  viewRange: ListRange
+  //viewRange: ListRange
 
   ngOnInit(): void {
     this.mockData()
@@ -39,14 +39,14 @@ export class ListRxComponent implements OnInit {
   }
 
   private subscribeToViewport(): void {
-    this.virtualScrollViewport().viewRange.subscribe(range => {
+    /*this.virtualScrollViewport().viewRange.subscribe(range => {
       this.viewRange = range
-    })
+    })*/
   }
 
   private initDD(): void {
     // get element with id 'list'
-    const sortable = new Sortable(this.virtualScrollViewport().getScrollElement(), {
+    /*const sortable = new Sortable(this.virtualScrollViewport().getScrollElement(), {
       group: 'shared',
       animation: 150,
       onEnd: (event) => {
@@ -54,7 +54,7 @@ export class ListRxComponent implements OnInit {
         this.items.splice(event.oldIndex!, 1)
         this.items.splice(event.newIndex!, 0, item)
       }
-    })
+    })*/
   }
 
   dynamicSize(item: Item): number {
