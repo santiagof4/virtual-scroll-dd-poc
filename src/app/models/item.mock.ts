@@ -1,18 +1,20 @@
-import { rand, randCatchPhrase, randLine, randNumber, randUuid } from '@ngneat/falso'
-import { Item } from './item.model'
+import { randCatchPhrase, randLine, randNumber, randUuid } from '@ngneat/falso'
+import { Item, ItemType } from './item.model'
 
 /**
  * Mocks an item object
- * @param {string} type
+ * @param {ItemType} type
+ * @param {string} headerId
  * @returns Item
  */
-export function mockItem(type: 'header' | 'item' | 'separator'): Item {
+export function mockItem(type: ItemType, headerId?: string): Item {
   return {
     id: randUuid(),
-    title: randCatchPhrase(),
+    title: type === 'space' ? 'No items in group' : randCatchPhrase(),
     description: randLine({ lineCount: randNumber({ min: 5, max: 20 })}),
     expanded: false,
-    type
+    type,
+    headerId
   }
 }
 
@@ -32,15 +34,21 @@ export function mockItems(count = 10000): Item[] {
     remaining--
 
     // Add a header
-    items.push(mockItem('header'))
+    const header = mockItem('header')
+    items.push(header)
     remaining--
 
     if (remaining) {
       // Add a random number of items
       const itemCount = randNumber({min: 0, max: Math.min(remaining, 10)})
-      for (let i = 0; i < itemCount; i++) {
-        items.push(mockItem('item'))
-        remaining--
+
+      if (itemCount === 0) {
+        items.push(mockItem('space',  header.id))
+      } else {
+        for (let i = 0; i < itemCount; i++) {
+          items.push(mockItem('item', header.id))
+          remaining--
+        }
       }
     }
 

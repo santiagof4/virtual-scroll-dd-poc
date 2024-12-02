@@ -21,12 +21,12 @@
 
       appDrag
       [dragItem]="item"
-      [dragAllowedEdges]="['top', 'bottom']"
+      [dragAllowedEdges]="item.type === 'space' ? ['bottom'] : ['top', 'bottom']"
       [dragPlaceholderSize]="{ height: item.type === 'header' ? HEADER_SIZE : ITEM_SIZE }"
       [dragPreviewComponent]="ItemDragPreviewComponent"
       [dragPreviewOffset]="{ x: 0, y: item.type === 'header' ? 50 : 0 }"
       [dragIndentThreshold]="50"
-      [dragCanDrag]="item.type !== 'separator'"
+      [dragCanDrag]="item.type !== 'separator' && item.type !== 'space'"
       [dragCanDrop]="canDrop.bind(this)"
       (onDragStarted)="onDragStarted(item)"
       (onDragPreviewCreated)="setDragPreviewInputs($event, item)"

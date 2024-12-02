@@ -9,35 +9,32 @@ import {
   Type,
   viewChild
 } from '@angular/core'
-import { HEADER_SIZE, Item, ITEM_SIZE } from '../../models/item.model'
-import { mockItems } from '../../models/item.mock'
+import { HEADER_SIZE, isEmptyGroup, Item, ITEM_SIZE, SEPARATOR_SIZE, SPACE_SIZE } from '../../models/item.model'
+import { mockItem, mockItems } from '../../models/item.mock'
 import { ItemComponent } from '../item/item.component'
-import {
-  CdkVirtualForOf,
-  CdkVirtualScrollableElement,
-  CdkVirtualScrollViewport
-} from '@angular/cdk/scrolling'
+import { CdkVirtualForOf, CdkVirtualScrollableElement, CdkVirtualScrollViewport } from '@angular/cdk/scrolling'
 import {
   CustomVirtualScrollDirective
 } from '../../directives/custom-virtual-scroll-strategy/custom-virtual-scroll-strategy.directive'
 import { DragDirective, DropTargetEvent } from '../../directives/drag/drag.directive'
 import { DropDirective } from '../../directives/drop/drop.directive'
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
+import { BaseEventPayload, ElementDragType } from '@atlaskit/pragmatic-drag-and-drop/types'
 
 @Component({
-    selector: 'app-list',
-    imports: [
-        ItemComponent,
-        CdkVirtualScrollViewport,
-        CdkVirtualForOf,
-        CustomVirtualScrollDirective,
-        CdkVirtualScrollableElement,
-        DragDirective,
-        DropDirective
-    ],
-    templateUrl: './list-cdk4.component.html',
-    styleUrl: './list-cdk4.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-list',
+  imports: [
+    ItemComponent,
+    CdkVirtualScrollViewport,
+    CdkVirtualForOf,
+    CustomVirtualScrollDirective,
+    CdkVirtualScrollableElement,
+    DragDirective,
+    DropDirective
+  ],
+  templateUrl: './list-cdk4.component.html',
+  styleUrl: './list-cdk4.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListCdk4Component implements OnInit, AfterViewInit {
   viewport = viewChild.required(CdkVirtualScrollViewport)
@@ -97,25 +94,32 @@ export class ListCdk4Component implements OnInit, AfterViewInit {
     return this.items().map(item => {
       switch (item.type) {
         case 'header':
-          return (item.expanded ? 150 : 70)
+          return (item.expanded ? 150 : HEADER_SIZE)
         case 'item':
-          return item.expanded ? 200 : 34
+          return item.expanded ? 200 : ITEM_SIZE
         case 'separator':
-          return 30
+          return SEPARATOR_SIZE
+        case 'space':
+          return SPACE_SIZE
       }
     })
   }
 
   /**
    * Updates the items after they have been reordered
-   * @param {Item[]} items
+   * @param {{ items: Item[]; droppedItem: Item; droppedTargetItem: Item }} event
    */
-  onItemsReordered(items: Item[]): void {
-    // Keep the expanded state of the items
-    this.items.set(items.map(item => {
+  onItemsReordered(event: { items: Item[]; droppedItem: Item; droppedTargetItem: Item }): void {
+    this.items.set(event.items.map(item => {
       const existingItem = this.items().find(i => i.id === item.id)
-      return {...item, expanded: existingItem?.expanded ?? false}
+      return {
+        ...item,
+        expanded: existingItem?.expanded ?? false, // Keep the expanded state of the items
+        headerId: item.id === event.droppedItem.id ? event.droppedTargetItem.headerId : item.headerId // Update the headerId of the item
+      }
     }))
+
+    this.updateSpaceItems()
   }
 
   /**
@@ -185,9 +189,31 @@ export class ListCdk4Component implements OnInit, AfterViewInit {
 
     // Items can be dropped only after another item
     if (dragItem.type === 'item') {
-      return dragItem.type === dropTargetItem.type && dropItemIndex > 0
+      return (dragItem.type === dropTargetItem.type && dropItemIndex > 0) || dropTargetItem.type === 'space'
     }
 
     return false
+  }
+
+  /**
+   * Adds a space items next to empty groups
+   * Removes the space items if they are not needed
+   */
+  private updateSpaceItems(): void {
+    this.items.update(items => {
+      items.forEach((item, i) => {
+        if (item.type === 'header') {
+          if (isEmptyGroup(items, item)) {
+            if (items[i + 1]?.type !== 'space') {
+              items.splice(i + 1, 0, mockItem('space', item.id))
+            }
+          } else if (items[i + 1]?.type === 'space') {
+            items.splice(i + 1, 1)
+          }
+        }
+      })
+
+      return items
+    })
   }
 }

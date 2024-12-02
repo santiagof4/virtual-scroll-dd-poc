@@ -22,7 +22,7 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
   onDragStarted = output<BaseEventPayload<ElementDragType>>()
   onDragged = output<BaseEventPayload<ElementDragType>>()
   onDropped = output<BaseEventPayload<ElementDragType>>()
-  onItemsReordered = output<I[]>()
+  onItemsReordered = output<{ items: I[], droppedItem: I, droppedTargetItem: I }>()
 
   constructor() {
     effect(() => {
@@ -126,6 +126,6 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
       return [...items]
     })
 
-    this.onItemsReordered.emit(this.dropItems())
+    this.onItemsReordered.emit({ items: this.dropItems(), droppedItem: draggedItem, droppedTargetItem: dropTargetItem })
   }
 }

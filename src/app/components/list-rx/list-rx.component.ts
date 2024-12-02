@@ -66,6 +66,8 @@ export class ListRxComponent implements OnInit {
         return item.expanded ? 200 : 34
       case 'separator':
         return 10
+      default:
+        return 0
     }
   }
 

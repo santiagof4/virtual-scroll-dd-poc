@@ -84,21 +84,28 @@ export class DragDirective<I extends { id: string }, C = any> implements AfterVi
 
       const placeholderSize = this.dragDropService.placeholderSize()
 
-      if (this.dragDropService.dragDirection() === 'down') {
+      if (this.dragAllowedEdges().length === 1 && this.dragAllowedEdges()[0] === 'bottom') {
         if (itemIndex > dragInitialIndex && itemIndex <= dragOverIndex) {
           style.transform = `translateY(-${placeholderSize.height}px)`
           this.appliedTransformDirection = 'up'
-        } else if (itemIndex <= dragInitialIndex && itemIndex > dragOverIndex) {
-          style.transform = `translateY(${placeholderSize.height}px)`
-          this.appliedTransformDirection = 'down'
         }
-      } else if (this.dragDropService.dragDirection() === 'up') {
-        if (itemIndex < dragInitialIndex && itemIndex >= dragOverIndex) {
-          style.transform = `translateY(${placeholderSize.height}px)`
-          this.appliedTransformDirection = 'down'
-        } else if (itemIndex >= dragInitialIndex && itemIndex < dragOverIndex) {
-          style.transform = `translateY(-${placeholderSize.height}px)`
-          this.appliedTransformDirection = 'up'
+      } else {
+        if (this.dragDropService.dragDirection() === 'down') {
+          if (itemIndex > dragInitialIndex && itemIndex <= dragOverIndex) {
+            style.transform = `translateY(-${placeholderSize.height}px)`
+            this.appliedTransformDirection = 'up'
+          } else if (itemIndex <= dragInitialIndex && itemIndex > dragOverIndex) {
+            style.transform = `translateY(${placeholderSize.height}px)`
+            this.appliedTransformDirection = 'down'
+          }
+        } else if (this.dragDropService.dragDirection() === 'up') {
+          if (itemIndex < dragInitialIndex && itemIndex >= dragOverIndex) {
+            style.transform = `translateY(${placeholderSize.height}px)`
+            this.appliedTransformDirection = 'down'
+          } else if (itemIndex >= dragInitialIndex && itemIndex < dragOverIndex) {
+            style.transform = `translateY(-${placeholderSize.height}px)`
+            this.appliedTransformDirection = 'up'
+          }
         }
       }
     }

@@ -11,8 +11,14 @@
     height: 100%;
   }
 
-  &.header, &.item {
-    &:not(.dragging.moved-up):not(.dragging.moved-down) {
+  &.header, &.item, &.space {
+    //
+    /**
+     * Do not have both the dragging and moved-up classes.
+     * Do not have both the dragging and moved-down classes.
+     * Do not have a sibling element with the separator and moved-up classes.
+     */
+    &:not(.dragging.moved-up):not(.dragging.moved-down):not(:has(+ .separator.moved-up)) {
       section {
         border-left: 3px solid #d3d3d3;
         border-right: 3px solid #d3d3d3;
@@ -26,6 +32,13 @@
     margin: 0 10px;
     padding: 0 10px;
     align-items: center;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    p {
+      margin: 0;
+    }
   }
 
   &:not(.last-of-group) article {
@@ -35,17 +48,6 @@
   h6 {
     cursor: pointer;
     margin: 0;
-  }
-
-  article {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    border-bottom: 1px solid #000;
-
-    p {
-      margin: 0;
-    }
   }
 
   &.header {
@@ -94,6 +96,7 @@
       position: absolute;
       top: 100%;
       left: 0;
+      box-sizing: border-box;
       width: 100%;
       height: 0;
       z-index: 999;
@@ -103,6 +106,10 @@
       transition-delay: .2s;
       pointer-events: none;
     }
+  }
+
+  &.header ::after {
+    max-height: 50%;
   }
 
   &.moved-up:not(.last-of-group) {
@@ -147,11 +154,12 @@
         margin-bottom: 20px;
       }
 
-      ::after {
+      ::before {
         content: '';
         position: absolute;
         top: -34px;
         left: 0;
+        box-sizing: border-box;
         width: 100%;
         height: 34px;
         z-index: 999;
@@ -160,6 +168,18 @@
         transition: height .2s, top .2s;
         transition-delay: .2s;
         pointer-events: none;
+      }
+    }
+  }
+
+  &.space {
+    height: 34px;
+
+    article {
+      justify-content: center;
+
+      h6 {
+        color: #706f6f;
       }
     }
   }
