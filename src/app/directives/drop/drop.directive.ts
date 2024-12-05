@@ -24,7 +24,7 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
   private viewContainerRef = inject(ViewContainerRef)
   private dragDropService = inject(DragDropService)
 
-  dropItems = model.required<I[]>()
+  dropItems = input.required<I[]>()
   dropScrollingElementSelector = input<string>()
 
   onDragStarted = output<BaseEventPayload<ElementDragType>>()
@@ -114,32 +114,25 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
   private reorderItems(event: BaseEventPayload<ElementDragType>): void {
     const draggedItem = event.location.initial.dropTargets[0]?.data['item'] as I
     const dropTargetItem = event.location.current.dropTargets[0]?.data['item'] as I
+    const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
 
-    if (!draggedItem || !dropTargetItem || draggedItem.id === dropTargetItem.id) {
+    if (!draggedItem || !dropTargetItem || draggedItem.id === dropTargetItem.id || !closestEdge) {
       return
     }
 
-    const draggedIndex = this.dragDropService.itemIndexes.get(draggedItem.id)
-    const dropIndex = this.dragDropService.itemIndexes.get(dropTargetItem.id)
-
-    const direction = draggedIndex < dropIndex! ? -1 : 0
-
-    const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
-    const offset = closestEdge === 'top' ? 0 : 1
-
-    this.dropItems.update(items => {
-      items.splice(draggedIndex, 1)
-
-      items.splice(dropIndex + offset + direction, 0, draggedItem)
-      return [...items]
-    })
+    const reorderingInfo = this.dragDropService.reorderItems(
+      this.dropItems(),
+      draggedItem,
+      dropTargetItem,
+      closestEdge
+    )
 
     this.onItemsReordered.emit({
-      items: this.dropItems(),
+      items: reorderingInfo.reorderedItems,
       droppedItem: draggedItem,
-      droppedItemIndex: draggedIndex,
+      droppedItemIndex: reorderingInfo.draggedIndex,
       droppedTargetItem: dropTargetItem,
-      droppedTargetItemIndex: dropIndex,
+      droppedTargetItemIndex: reorderingInfo.dropIndex,
       closestEdge
     })
   }
