@@ -17,9 +17,8 @@ import {
   CustomVirtualScrollDirective
 } from '../../directives/custom-virtual-scroll-strategy/custom-virtual-scroll-strategy.directive'
 import { DragDirective, DropTargetEvent } from '../../directives/drag/drag.directive'
-import { DropDirective } from '../../directives/drop/drop.directive'
+import { DropDirective, ReorderedEvent } from '../../directives/drop/drop.directive'
 import { ItemDragPreviewComponent } from '../item-drag-preview/item-drag-preview.component'
-import { BaseEventPayload, ElementDragType } from '@atlaskit/pragmatic-drag-and-drop/types'
 
 @Component({
   selector: 'app-list',
@@ -107,19 +106,23 @@ export class ListCdk4Component implements OnInit, AfterViewInit {
 
   /**
    * Updates the items after they have been reordered
-   * @param {{ items: Item[]; droppedItem: Item; droppedTargetItem: Item }} event
+   * @param {ReorderedEvent<Item>} event
    */
-  onItemsReordered(event: { items: Item[]; droppedItem: Item; droppedTargetItem: Item }): void {
-    this.items.set(event.items.map(item => {
-      const existingItem = this.items().find(i => i.id === item.id)
-      return {
-        ...item,
-        expanded: existingItem?.expanded ?? false, // Keep the expanded state of the items
-        headerId: item.id === event.droppedItem.id ? event.droppedTargetItem.headerId : item.headerId // Update the headerId of the item
-      }
-    }))
+  onItemsReordered(event: ReorderedEvent<Item>): void {
+    if (event.droppedItem.type === 'item') {
+      this.items.set(event.items.map(item => {
+        const existingItem = this.items().find(i => i.id === item.id)
+        return {
+          ...item,
+          expanded: existingItem?.expanded ?? false, // Keep the expanded state of the items
+          headerId: item.id === event.droppedItem.id ? event.droppedTargetItem.headerId : item.headerId // Update the headerId of the item
+        }
+      }))
 
-    this.updateSpaceItems()
+      this.updateSpaceItems()
+    } else if (event.droppedItem.type === 'header') {
+      // TODO: Implement the logic for reordering headers
+    }
   }
 
   /**
@@ -131,7 +134,12 @@ export class ListCdk4Component implements OnInit, AfterViewInit {
 
     // Collapse all items
     this.itemsCopy = [...this.items()]
-    this.items.update(items => items.map(i => ({...i, expanded: false})))
+
+    this.items.update(items => {
+      const collapsedItems = items.map(i => ({...i, expanded: false}))
+
+      return item.type === 'header' ? collapsedItems.filter(i => i.type === 'header') : collapsedItems
+    })
   }
 
   /**
@@ -184,7 +192,7 @@ export class ListCdk4Component implements OnInit, AfterViewInit {
 
     // Headers can be dropped only on another header or at the top
     if (dragItem.type === 'header') {
-      return dragItem.type === dropTargetItem.type && dropItemIndex === 0
+      return dragItem.type === dropTargetItem.type
     }
 
     // Items can be dropped only after another item
