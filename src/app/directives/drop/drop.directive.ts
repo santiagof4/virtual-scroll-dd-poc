@@ -112,8 +112,12 @@ export class DropDirective<I extends { id: string }> implements AfterViewInit {
    * @param {BaseEventPayload<ElementDragType>} event
    */
   private reorderItems(event: BaseEventPayload<ElementDragType>): void {
-    const draggedItem = event.location.initial.dropTargets[0]?.data['item'] as I
-    const dropTargetItem = event.location.current.dropTargets[0]?.data['item'] as I
+    if (!event.location.current.dropTargets[0] || !event.location.initial.dropTargets[0]) {
+      return
+    }
+
+    const draggedItem = event.location.initial.dropTargets[0].data['item'] as I
+    const dropTargetItem = event.location.current.dropTargets[0].data['item'] as I
     const closestEdge = extractClosestEdge(event.location.current.dropTargets[0].data)
 
     if (!draggedItem || !dropTargetItem || draggedItem.id === dropTargetItem.id || !closestEdge) {
